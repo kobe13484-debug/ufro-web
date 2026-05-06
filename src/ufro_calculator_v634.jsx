@@ -303,14 +303,34 @@ export default function UFROCalculator() {
       const enabledSrcs = dilutionSources.filter(s=>s.enabled);
       const Cd = enabledSrcs.length > 0 ? enabledSrcs.reduce((s,x)=>s+toNumber(x.conductivity),0)/enabledSrcs.length : 500;
       const srcNames = enabledSrcs.map(s=>s.name).join(', ') || 'น้ำผสม';
-      if (Cd >= Ctarget) return { needed: true, rejectFails, autoMode: true, cannotSolve: true, Cd, Cr, Qr, Ctarget, msg: `Conductivity น้ำผสม (${Math.round(Cd)}) สูงกว่าเป้าหมาย (${Math.round(Ctarget)} µS/cm)` };
-      if (Cr <= Ctarget) return { needed: true, rejectFails, autoMode: true, cannotSolve: false, QdReq: 0, Cd, Cr, Qr, Ctarget, finalFlow: Qr, finalCond: Cr, finalTDS: cond2tds(Cr), finalStatus: getRejectStatus(cond2tds(Cr)), finalV: validateDischarge(cond2tds(Cr)), srcName: srcNames };
+
+      // IMPORTANT — DO NOT REMOVE:
+      // This function creates source-level dilution flow data for the Mixing diagram.
+      // The total required dilution water (QdReq) alone is NOT enough for operation/engineering review.
+      // Users must see how much water EACH selected dilution source contributes into DILUTION / MIXING.
+      // If this is removed, the diagram will collapse back to one generic "น้ำผสม" line and the operator
+      // cannot verify the flow from each source before mixing with UF Reject + RO Reject.
+      const makeMixingSources = (flow) => enabledSrcs.map(s => ({
+        ...s,
+        actualFlow: enabledSrcs.length > 0 ? flow / enabledSrcs.length : 0,
+        actualRatio: enabledSrcs.length > 0 ? 100 / enabledSrcs.length : 0,
+      }));
+
+      if (Cd >= Ctarget) {
+        const mixingSources = makeMixingSources(0);
+        return { needed: true, rejectFails, autoMode: true, cannotSolve: true, Cd, Cr, Qr, Ctarget, sourceFlows: mixingSources, mixingSources, msg: `Conductivity น้ำผสม (${Math.round(Cd)}) สูงกว่าเป้าหมาย (${Math.round(Ctarget)} µS/cm)` };
+      }
+      if (Cr <= Ctarget) {
+        const mixingSources = makeMixingSources(0);
+        return { needed: true, rejectFails, autoMode: true, cannotSolve: false, QdReq: 0, Cd, Cr, Qr, Ctarget, finalFlow: Qr, finalCond: Cr, finalTDS: cond2tds(Cr), finalStatus: getRejectStatus(cond2tds(Cr)), finalV: validateDischarge(cond2tds(Cr)), srcName: srcNames, sourceFlows: mixingSources, mixingSources };
+      }
       const QdReq = Qr * (Cr - Ctarget) / (Ctarget - Cd);
       const finalFlow = Qr + QdReq;
       const finalCond = (Qr*Cr + QdReq*Cd) / finalFlow;
       const finalTDS = cond2tds(finalCond);
       const finalV = validateDischarge(finalTDS);
-      return { needed: true, rejectFails, autoMode: true, cannotSolve: false, QdReq, Cd, Cr, Qr, Ctarget, finalFlow, finalCond, finalTDS, finalStatus: finalV.severityStatus, finalAllowed: finalV.regulatoryAllowed, finalV, srcName: srcNames };
+      const mixingSources = makeMixingSources(QdReq);
+      return { needed: true, rejectFails, autoMode: true, cannotSolve: false, QdReq, Cd, Cr, Qr, Ctarget, finalFlow, finalCond, finalTDS, finalStatus: finalV.severityStatus, finalAllowed: finalV.regulatoryAllowed, finalV, srcName: srcNames, sourceFlows: mixingSources, mixingSources };
     } else {
       const active = dilutionSources.filter(s=>s.enabled && toNumber(s.flow) > 0);
       const dilFlow = active.reduce((s,x)=>s+toNumber(x.flow),0);
@@ -319,7 +339,15 @@ export default function UFROCalculator() {
       const finalCond = finalFlow > 0 ? (Qr*Cr + dilCondLoad) / finalFlow : Cr;
       const finalTDS = cond2tds(finalCond);
       const finalV = validateDischarge(finalTDS);
-      return { needed: true, rejectFails, autoMode: false, cannotSolve: false, dilFlow, finalFlow, finalCond, finalTDS, finalStatus: finalV.severityStatus, finalAllowed: finalV.regulatoryAllowed, finalV, Cr, Qr, Ctarget, sources: active };
+      // IMPORTANT — DO NOT REMOVE:
+      // Manual mode must also expose mixingSources so the Mixing diagram can show each dilution source
+      // as a separate incoming line with its own flow. This is critical for explaining the real water balance.
+      const mixingSources = active.map(s => ({
+        ...s,
+        actualFlow: toNumber(s.flow),
+        actualRatio: dilFlow > 0 ? (toNumber(s.flow) / dilFlow) * 100 : 0,
+      }));
+      return { needed: true, rejectFails, autoMode: false, cannotSolve: false, dilFlow, finalFlow, finalCond, finalTDS, finalStatus: finalV.severityStatus, finalAllowed: finalV.regulatoryAllowed, finalV, Cr, Qr, Ctarget, sources: active, mixingSources };
     }
   }, [calc, dilutionSources, dilutionMode, showDilutionSim, safetyMargin]);
 
@@ -621,6 +649,12 @@ export default function UFROCalculator() {
                           <div style={S.srcField}><label style={S.srcFieldLabel}>Conductivity</label><div style={S.srcInputWrap}>
                             <NumInput value={ds.conductivity} onValueChange={v=>updateDilution(ds.id,'conductivity',v)} style={S.srcInput}/><span style={S.srcUnit}>µS/cm</span></div>
                             <div style={S.srcTdsHint}>≈ TDS {Math.round(cond2tds(ds.conductivity))} mg/L</div></div>
+                          {/* IMPORTANT — DO NOT REMOVE:
+                              This read-only Auto Flow shows how much water THIS source contributes into Mixing.
+                              Without this, users only see total dilution flow and cannot check per-source water balance. */}
+                          <div style={{...S.srcField,marginTop:6}}><label style={S.srcFieldLabel}>Auto Flow to Mixing</label><div style={S.srcInputWrap}>
+                            <NumInput value={parseFloat((vol(dilution.mixingSources?.find(x=>x.id===ds.id)?.actualFlow || 0)).toFixed(1))} onValueChange={()=>{}} style={S.srcInput} readOnly/><span style={S.srcUnit}>{volUnit}</span></div>
+                            {timeUnit==='hourly'&&<div style={S.srcTdsHint}>≈ {fmt((dilution.mixingSources?.find(x=>x.id===ds.id)?.actualFlow || 0)*opsHours,0)} m³/day</div>}</div>
                         </div>}
                       </div>))}
                     {dilution.cannotSolve ?
@@ -790,8 +824,8 @@ export default function UFROCalculator() {
                 {dilution.needed && !dilution.cannotSolve && (dilution.finalFlow||0) > 0 && (<>
                   {dilutionMode==='manual' && dilution.sources?.map(ds=>
                     <StreamRow key={`dil-${ds.id}`} name={`├─ Dilution: ${ds.name}`} flow={vol(toNumber(ds.flow))} tds={cond2tds(toNumber(ds.conductivity))} pct={0} sub/>)}
-                  {dilutionMode==='auto' && (dilution.QdReq||0) > 0 &&
-                    <StreamRow name={`├─ Dilution: ${dilution.srcName}`} flow={vol(dilution.QdReq)} tds={cond2tds(dilution.Cd)} pct={0} sub/>}
+                  {dilutionMode==='auto' && (dilution.QdReq||0) > 0 && dilution.mixingSources?.map(ds=>
+                    <StreamRow key={`dil-auto-${ds.id}`} name={`├─ Dilution: ${ds.name}`} flow={vol(toNumber(ds.actualFlow))} tds={cond2tds(toNumber(ds.conductivity))} pct={0} sub/>)}
                   <StreamRow name="⑩ FINAL DISCHARGE" flow={vol(dilution.finalFlow)} tds={dilution.finalTDS} pct={0} highlight status={dilution.finalStatus}/>
                 </>)}
               </tbody></table>
@@ -1022,6 +1056,19 @@ const ProcessDiagram = React.forwardRef(function ProcessDiagram({calc,sources,fm
   const showFinalCond = hasDilution && dilution.finalCond ? Math.round(dilution.finalCond).toLocaleString() : fmtC(calc.totalRejectTDS);
   const finalColor = sc[finalSeverity] || sc.PASS;
 
+  // IMPORTANT — DO NOT REMOVE:
+  // These source-level dilution streams are required to show the actual water balance into DILUTION / MIXING.
+  // The user needs to see each selected source as its own box/line with its own flow, not only the total
+  // dilution flow. This prevents future edits from accidentally hiding where the dilution water comes from.
+  const dilSourcesRaw = hasDilution
+    ? (dilution?.mixingSources || (dilution?.autoMode ? dilution?.sourceFlows : dilution?.sources) || [])
+    : [];
+  const dilSources = dilSourcesRaw
+    .map(s => ({ ...s, actualFlow: s.actualFlow !== undefined ? s.actualFlow : toNumber(s.flow) }))
+    .filter(s => s.enabled !== false && toNumber(s.actualFlow) > 0.0001)
+    .slice(0, 5);
+  const dilWaterFlow = hasDilution ? (dilution?.autoMode ? (dilution.QdReq || 0) : (dilution.dilFlow || 0)) : 0;
+
   return (
     <svg ref={ref} viewBox="0 0 1000 460" style={{width:'100%',height:'auto',minWidth:700}} xmlns="http://www.w3.org/2000/svg">
       <rect width="1000" height="460" fill="#060c09" rx="4"/>
@@ -1111,10 +1158,50 @@ const ProcessDiagram = React.forwardRef(function ProcessDiagram({calc,sources,fm
         <text x="525" y="416" textAnchor="middle" fill={rejectFails?'#cde7d2':'#3a6049'} fontSize="8" fontFamily="ui-monospace,monospace">
           {hasDilution ? `${fmt(vol(dilution.finalFlow),1)} ${volUnit}` : (rejectFails ? 'กรุณาเพิ่มน้ำผสม' : 'Not required')}</text>
 
-        {/* Dilution water arrow */}
-        <line x1="380" y1="404" x2="440" y2="404" stroke={rejectFails?'#5da377':'#2a4538'} strokeWidth={rejectFails?1.5:1} strokeDasharray={rejectFails?'':'3,3'} markerEnd="url(#arr)"/>
-        <text x="368" y="398" textAnchor="end" fill={rejectFails?'#9bc7a4':'#3a6049'} fontSize="7" fontFamily="ui-monospace,monospace">น้ำผสม</text>
-        <text x="368" y="412" textAnchor="end" fill={rejectFails?'#7ba386':'#2a4538'} fontSize="7" fontFamily="ui-monospace,monospace">Cond ต่ำ</text>
+        {/* Dilution Sources → Mixing
+            IMPORTANT — DO NOT REMOVE:
+            This block shows the flow from EACH dilution source into DILUTION / MIXING.
+            It is intentionally source-level, not only total flow, because operators/engineers need to verify
+            how much water is added from each source before it mixes with UF Reject + RO Reject.
+        */}
+        {dilSources.length > 0 ? (
+          dilSources.map((ds, i) => {
+            const total = dilSources.length;
+            const laneGap = 20;
+            const y = 404 - ((total - 1) * laneGap) / 2 + i * laneGap;
+            const x0 = 135;
+            const boxW = 185;
+            const midX = 380;
+            const flow = toNumber(ds.actualFlow);
+            const cond = ds.conductivity !== undefined ? toNumber(ds.conductivity) : toNumber(ds.tds);
+            return (
+              <g key={`dil-src-${ds.id || i}`}>
+                <rect x={x0} y={y - 12} width={boxW} height="24" rx="3"
+                  fill={rejectFails?'#0f2218':'#0d1814'}
+                  stroke={rejectFails?'#5da377':'#2a4538'} strokeWidth={rejectFails?1:0.75}/>
+                <text x={x0 + 7} y={y - 2} textAnchor="start" fill={rejectFails?'#9bc7a4':'#3a6049'} fontSize="7" fontFamily="ui-monospace,monospace" fontWeight="700">
+                  {ds.name || `Source ${i+1}`}</text>
+                <text x={x0 + 7} y={y + 9} textAnchor="start" fill={rejectFails?'#e8f0e8':'#2a4538'} fontSize="7" fontFamily="ui-monospace,monospace" fontWeight="600">
+                  {`${fmt(vol(flow),1)} ${volUnit}${cond ? ` · ${Math.round(cond).toLocaleString()} µS/cm` : ''}`}</text>
+                <path d={`M ${x0 + boxW} ${y} L ${midX} ${y} L 440 404`}
+                  fill="none" stroke={rejectFails?'#5da377':'#2a4538'} strokeWidth={rejectFails?1.5:1} markerEnd="url(#arr)"/>
+              </g>
+            );
+          })
+        ) : (
+          <>
+            <line x1="380" y1="404" x2="440" y2="404" stroke={rejectFails?'#5da377':'#2a4538'} strokeWidth={rejectFails?1.5:1} strokeDasharray={rejectFails?'':'3,3'} markerEnd="url(#arr)"/>
+            <text x="368" y="398" textAnchor="end" fill={rejectFails?'#9bc7a4':'#3a6049'} fontSize="7" fontFamily="ui-monospace,monospace">น้ำผสม</text>
+            <text x="368" y="412" textAnchor="end" fill={rejectFails?'#7ba386':'#2a4538'} fontSize="7" fontFamily="ui-monospace,monospace">Cond ต่ำ</text>
+          </>
+        )}
+
+        {dilSources.length > 0 && (
+          <>
+            <text x="330" y="366" textAnchor="start" fill={rejectFails?'#d4a857':'#3a6049'} fontSize="7" fontFamily="ui-monospace,monospace" fontWeight="700">DILUTION WATER TOTAL</text>
+            <text x="330" y="378" textAnchor="start" fill={rejectFails?'#f0d488':'#2a4538'} fontSize="8" fontFamily="ui-monospace,monospace" fontWeight="700">{`${fmt(vol(dilWaterFlow),1)} ${volUnit}`}</text>
+          </>
+        )}
 
         {/* → Final Discharge */}
         <line x1="610" y1="404" x2="700" y2="404" stroke={finalColor} strokeWidth={rejectFails?2:1} markerEnd="url(#arr)"/>
