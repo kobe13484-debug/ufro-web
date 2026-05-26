@@ -15,7 +15,6 @@ function NumInput({ value, onValueChange, style, readOnly, forceSync }) {
 const TDS_TO_COND = 2, COND_TO_TDS = 0.5;
 const tds2cond = t => t * TDS_TO_COND, cond2tds = c => c * COND_TO_TDS;
 const REJECT_TDS_LIMIT = 3000, REJECT_COND_LIMIT = 6000;
-const MNO2_REJECT_PCT = 3;
 const DIAGRAM_BASE_W = 1700, DIAGRAM_BASE_H = 800;
 const clampDiagramZoom = (v) => Math.max(0.5, Math.min(2.5, Math.round(v * 10) / 10));
 
@@ -53,24 +52,24 @@ function Section({ title, open, onToggle, accent, children }) {
 
 // ────── PDF Preset Equipment (Section E) ──────
 const PDF_EQUIPMENT_PRESET = [
-  {id:1,name:'Raw Water Pump',kw:11,qty:2,loadKw:18.7,hoursDay:22,enabled:true},
-  {id:2,name:'Self-cleaning Filter',kw:0.37,qty:1,loadKw:0.315,hoursDay:22,enabled:true},
-  {id:3,name:'Ultrafiltration (UF) Unit',kw:0.05,qty:2,loadKw:0.085,hoursDay:24,enabled:true},
-  {id:4,name:'UF Backwash Pump',kw:18.5,qty:1,loadKw:7.4,hoursDay:2,enabled:true},
-  {id:5,name:'UF Product Water Transfer Pump',kw:5.5,qty:1,loadKw:2.2,hoursDay:22,enabled:true},
-  {id:6,name:'1st-stage RO Booster Pump',kw:22,qty:1,loadKw:18.7,hoursDay:22,enabled:true},
-  {id:7,name:'1st-stage RO High-pressure Pump',kw:75,qty:1,loadKw:63.75,hoursDay:22,enabled:true},
-  {id:8,name:'Reverse Osmosis (RO) Unit',kw:0.05,qty:1,loadKw:0.043,hoursDay:24,enabled:true},
-  {id:9,name:'RO Flushing Water Pump',kw:18.5,qty:1,loadKw:3.7,hoursDay:1,enabled:true},
-  {id:10,name:'Chemical Cleaning Water Pump',kw:18.5,qty:1,loadKw:1.85,hoursDay:0.3,enabled:true},
-  {id:11,name:'Control Cabinet',kw:5.5,qty:1,loadKw:4.675,hoursDay:24,enabled:true},
-  {id:12,name:'Bactericide Dosing Pump',kw:0.75,qty:1,loadKw:0.075,hoursDay:22,enabled:true},
-  {id:13,name:'UF Backwash Acid Dosing Pump',kw:0.55,qty:1,loadKw:0.055,hoursDay:0.2,enabled:true},
-  {id:14,name:'UF Backwash Alkali Dosing Pump',kw:0.55,qty:1,loadKw:0.055,hoursDay:0.5,enabled:true},
-  {id:15,name:'Non-oxidizing Bactericide Dosing Pump',kw:0.25,qty:1,loadKw:0.213,hoursDay:22,enabled:true},
-  {id:16,name:'Scale Inhibitor Dosing Pump',kw:0.25,qty:1,loadKw:0.213,hoursDay:22,enabled:true},
-  {id:17,name:'Reducing Agent Dosing Pump',kw:0.25,qty:1,loadKw:0.213,hoursDay:22,enabled:true},
-  {id:18,name:'Reducing Agent Mixer',kw:0.75,qty:1,loadKw:0.638,hoursDay:22,enabled:true},
+  {id:1,name:'Raw Water Pump',kw:11,qty:2,hoursDay:22,enabled:true},
+  {id:2,name:'Self-cleaning Filter',kw:0.37,qty:1,hoursDay:22,enabled:true},
+  {id:3,name:'Ultrafiltration (UF) Unit',kw:0.05,qty:2,hoursDay:24,enabled:true},
+  {id:4,name:'UF Backwash Pump',kw:18.5,qty:1,hoursDay:2,enabled:true},
+  {id:5,name:'UF Product Water Transfer Pump',kw:5.5,qty:1,hoursDay:22,enabled:true},
+  {id:6,name:'1st-stage RO Booster Pump',kw:22,qty:1,hoursDay:22,enabled:true},
+  {id:7,name:'1st-stage RO High-pressure Pump',kw:75,qty:1,hoursDay:22,enabled:true},
+  {id:8,name:'Reverse Osmosis (RO) Unit',kw:0.05,qty:1,hoursDay:24,enabled:true},
+  {id:9,name:'RO Flushing Water Pump',kw:18.5,qty:1,hoursDay:1,enabled:true},
+  {id:10,name:'Chemical Cleaning Water Pump',kw:18.5,qty:1,hoursDay:0.3,enabled:true},
+  {id:11,name:'Control Cabinet',kw:5.5,qty:1,hoursDay:24,enabled:true},
+  {id:12,name:'Bactericide Dosing Pump',kw:0.75,qty:1,hoursDay:22,enabled:true},
+  {id:13,name:'UF Backwash Acid Dosing Pump',kw:0.55,qty:1,hoursDay:0.2,enabled:true},
+  {id:14,name:'UF Backwash Alkali Dosing Pump',kw:0.55,qty:1,hoursDay:0.5,enabled:true},
+  {id:15,name:'Non-oxidizing Bactericide Dosing',kw:0.25,qty:1,hoursDay:22,enabled:true},
+  {id:16,name:'Scale Inhibitor Dosing Pump',kw:0.25,qty:1,hoursDay:22,enabled:true},
+  {id:17,name:'Reducing Agent Dosing Pump',kw:0.25,qty:1,hoursDay:22,enabled:true},
+  {id:18,name:'Reducing Agent Mixer',kw:0.75,qty:1,hoursDay:22,enabled:true},
 ];
 
 // ────── Defaults ──────
@@ -101,16 +100,6 @@ const DEFAULT_CHEMICALS = [
 const DEFAULT_CLEANING_EVENTS = [
   {id:1,name:'UF Online Chemical Cleaning',kw:18.5,qty:1,hoursEvent:1,intervalDays:7,enabled:true},
   {id:2,name:'RO CIP / Reverse Osmosis Cleaning',kw:18.5,qty:1,hoursEvent:3,intervalDays:60,enabled:true},
-];
-
-const DEFAULT_PHASE10_MACHINES = [
-  {id:1,name:'Phase 1 Raw Water Pump',loadKw:0,hoursDay:22,enabled:true},
-  {id:2,name:'TSS Treatment Equipment',loadKw:0,hoursDay:22,enabled:true},
-];
-
-const DEFAULT_PHASE10_CHEMICALS = [
-  {id:1,name:'PAC',dosageKgM3:0,unitPrice:0,enabled:true},
-  {id:2,name:'Polymer',dosageKgM3:0,unitPrice:0,enabled:true},
 ];
 
 const COST_GROUPS = [
@@ -174,11 +163,11 @@ export default function UFROCalculator() {
   const [recTab, setRecTab] = useState('status');
 
   // Cost: TOU electricity (Section C)
-  const [peakRate, setPeakRate] = useState(4.3297);
-  const [offPeakRate, setOffPeakRate] = useState(2.6369);
-  const [ftCharge, setFtCharge] = useState(0);
+  const [peakRate, setPeakRate] = useState(5.7982);
+  const [offPeakRate, setOffPeakRate] = useState(2.396);
+  const [ftCharge, setFtCharge] = useState(-0.0039);
   const [peakHoursDay, setPeakHoursDay] = useState(13);
-  const [offPeakHoursDay, setOffPeakHoursDay] = useState(11);
+  const [offPeakHoursDay, setOffPeakHoursDay] = useState(9);
   // Equipment table (Section B)
   const [equipments, setEquipments] = useState(PDF_EQUIPMENT_PRESET.map(e=>({...e})));
   const [cleaningEvents, setCleaningEvents] = useState(DEFAULT_CLEANING_EVENTS.map(e=>({...e})));
@@ -186,10 +175,6 @@ export default function UFROCalculator() {
   const [groupMachines, setGroupMachines] = useState(DEFAULT_GROUP_MACHINES.map(e=>({...e})));
   const [groupChemicals, setGroupChemicals] = useState(DEFAULT_GROUP_CHEMICALS.map(e=>({...e})));
   const [costGroupTab, setCostGroupTab] = useState('group_uf_ro_plan_A');
-  const [phase10Machines, setPhase10Machines] = useState(DEFAULT_PHASE10_MACHINES.map(e=>({...e})));
-  const [phase10Chemicals, setPhase10Chemicals] = useState(DEFAULT_PHASE10_CHEMICALS.map(e=>({...e})));
-  const [phase10StaffCount, setPhase10StaffCount] = useState(1);
-  const [phase10StaffSalary, setPhase10StaffSalary] = useState(15000);
   // Operation cost
   const [staffCount, setStaffCount] = useState(3);
   const [staffSalary, setStaffSalary] = useState(15000);
@@ -279,43 +264,76 @@ export default function UFROCalculator() {
     });
   };
   const updateRoutePercent = (id, value) => setPhase15RouteRatios(prev => distributeRoutePercent(id, value, prev, phase15Routes));
-  const autoCalculatePhase15Routes = () => {
+  const autoBlendPhase15Routes = () => {
+    const selected = routeIds.filter(id => phase15Routes[id]);
     const feedTDS = toNumber(mixedFeed.tds);
     const target = hasTargetCond ? toNumber(targetTDS) : feedTDS;
+    const capacity = Math.max(0, routeCapacityHourly);
+    if (!selected.length || !feedTDS || !capacity) {
+      setPhase15RouteAutoNote('Auto blend ต้องมีแผนที่เลือก, Feed และ Flow เป้าหมายก่อน');
+      return;
+    }
+
+    const setSingleRoute = (id, note) => {
+      setPhase15Routes({A:id==='A',B:id==='B',C:id==='C'});
+      setPhase15RouteRatios({A:id==='A'?100:0,B:id==='B'?100:0,C:id==='C'?100:0});
+      setPhase15RouteInputMode('percent');
+      setPhase15RouteAutoNote(note);
+    };
+
+    if (!hasTargetCond || feedTDS <= target) {
+      const preferred = selected.includes('C') ? 'C' : selected.includes('B') ? 'B' : 'A';
+      setSingleRoute(preferred, `Auto blend: Cond น้ำเข้า ${Math.round(tds2cond(feedTDS)).toLocaleString()} µS/cm ผ่านเป้าหมาย จึงเลือก Plan ${preferred} 100%`);
+      return;
+    }
+
+    if (!selected.includes('A')) {
+      const next = {A:0,B:selected.includes('B')?100:0,C:selected.includes('C')&&!selected.includes('B')?100:0};
+      setPhase15RouteRatios(next);
+      setPhase15RouteInputMode('percent');
+      setPhase15RouteAutoNote('Auto blend: แผนที่เลือกไม่มี Plan A จึงลด Cond ให้ถึงเป้าหมายไม่ได้');
+      return;
+    }
+
     const roR = (100 - toNumber(roReject)) / 100;
     const roPermTDS = feedTDS * (1 - toNumber(roSaltRejection) / 100);
-    let planATDS = feedTDS;
-    if (splitMode === 'manual') {
-      const toR = Math.max(0, Math.min(1, toNumber(manualToRO) / 100));
-      const bypass = 1 - toR;
-      const productFactor = bypass + toR * roR;
-      planATDS = productFactor > 0 ? (bypass * feedTDS + toR * roR * roPermTDS) / productFactor : feedTDS;
-    } else if (hasTargetCond && feedTDS > target && target >= roPermTDS) {
-      planATDS = target;
-    } else if (hasTargetCond && target < roPermTDS) {
+    let planATDS = toNumber(calc?.routes?.A?.actualProductTDS);
+    let noteExtra = '';
+    if (!planATDS || planATDS >= target) {
       planATDS = roPermTDS;
+      setSplitMode('manual');
+      setManualToRO(100);
+      noteExtra = ' · ปรับ UF Split เป็น RO 100% เพื่อให้ Plan A เป็นน้ำ Cond ต่ำสำหรับ blend';
     }
-    if (!feedTDS || !routeCapacityHourly) {
-      setPhase15RouteAutoNote('Auto calculate ต้องมี Feed และ Flow เป้าหมายก่อน');
+
+    if (target <= planATDS) {
+      setSingleRoute('A', `Auto blend: Plan A ต่ำสุดประมาณ ${Math.round(tds2cond(planATDS)).toLocaleString()} µS/cm ยังสูงกว่าเป้าหมาย จึงเลือก Plan A 100%`);
       return;
     }
-    if (!hasTargetCond || feedTDS <= target) {
-      setPhase15Routes({A:false,B:false,C:true});
-      setPhase15RouteRatios({A:0,B:0,C:100});
-      setPhase15RouteInputMode('percent');
-      setPhase15RouteAutoNote(`Cond น้ำเข้า ${Math.round(tds2cond(feedTDS)).toLocaleString()} µS/cm ผ่านเป้าหมาย เลือก Plan C 100%`);
+
+    const untreated = selected.filter(id => id !== 'A');
+    if (!untreated.length) {
+      setSingleRoute('A', 'Auto blend: เลือกเฉพาะ Plan A จึงตั้ง Plan A 100%');
       return;
     }
-    let planAShare = 1;
-    if (planATDS < target) {
-      planAShare = Math.max(0, Math.min(1, (feedTDS - target) / (feedTDS - planATDS)));
-    }
-    const aPct = Math.round(planAShare * 1000) / 10;
-    const bPct = Math.round((100 - aPct) * 10) / 10;
-    setPhase15Routes({A:true,B:bPct>0,C:false});
-    setPhase15RouteRatios({A:aPct,B:bPct,C:0});
+
+    const aShare = Math.max(0, Math.min(1, (feedTDS - target) / (feedTDS - planATDS)));
+    const aPct = Math.round(aShare * 1000) / 10;
+    const remainPct = Math.max(0, Math.round((100 - aPct) * 10) / 10);
+    const currentUntreatedSum = untreated.reduce((sum,id)=>sum+Math.max(0,toNumber(phase15RouteRatios[id])),0);
+    const next = {A:aPct,B:0,C:0};
+    untreated.forEach(id => {
+      next[id] = currentUntreatedSum > 0
+        ? Math.round((Math.max(0,toNumber(phase15RouteRatios[id])) / currentUntreatedSum) * remainPct * 10) / 10
+        : Math.round((remainPct / untreated.length) * 10) / 10;
+    });
+    const roundedSum = next.A + next.B + next.C;
+    const last = untreated[untreated.length - 1] || 'A';
+    next[last] = Math.max(0, Math.round((next[last] + (100 - roundedSum)) * 10) / 10);
+
+    setPhase15RouteRatios(next);
     setPhase15RouteInputMode('percent');
-    setPhase15RouteAutoNote(`Auto: Plan A ${aPct.toFixed(1)}% + Plan B ${bPct.toFixed(1)}% จากเป้าหมาย Flow ${Math.round(vol(routeCapacityHourly)).toLocaleString()} ${volUnit}, Cond ${Math.round(targetCond).toLocaleString()} µS/cm`);
+    setPhase15RouteAutoNote(`Auto blend: Flow ${Math.round(vol(capacity)).toLocaleString()} ${volUnit}, Cond เป้าหมาย ${Math.round(targetCond).toLocaleString()} µS/cm -> A ${next.A.toFixed(1)}%, B ${next.B.toFixed(1)}%, C ${next.C.toFixed(1)}%${noteExtra}`);
   };
   const handleStrategyChange = (nextStrategy) => {
     setStrategy(nextStrategy);
@@ -332,10 +350,9 @@ export default function UFROCalculator() {
     setPhase10HasTargetCond(true);setPhase10TargetCond(600);setPhase10HasTargetFlow(true);setPhase10TargetFlow(180);
     setDilutionMode('auto');setDilutionSources(DEFAULT_DILUTION.map(s=>({...s})));
     setShowDilutionSim(false);setSafetyMargin(10);setRecTab('status');
-    setPeakRate(4.3297);setOffPeakRate(2.6369);setFtCharge(0);setPeakHoursDay(13);setOffPeakHoursDay(11);
+    setPeakRate(5.7982);setOffPeakRate(2.396);setFtCharge(-0.0039);setPeakHoursDay(13);setOffPeakHoursDay(9);
     setEquipments(PDF_EQUIPMENT_PRESET.map(e=>({...e})));setCleaningEvents(DEFAULT_CLEANING_EVENTS.map(e=>({...e})));setChemicalRows(DEFAULT_CHEMICALS.map(e=>({...e})));
-    setGroupMachines(DEFAULT_GROUP_MACHINES.map(e=>({...e})));setGroupChemicals(DEFAULT_GROUP_CHEMICALS.map(e=>({...e})));setCostGroupTab('group_uf_ro_plan_A');
-    setPhase10Machines(DEFAULT_PHASE10_MACHINES.map(e=>({...e})));setPhase10Chemicals(DEFAULT_PHASE10_CHEMICALS.map(e=>({...e})));setPhase10StaffCount(1);setPhase10StaffSalary(15000);setStaffCount(3);setStaffSalary(15000);
+    setGroupMachines(DEFAULT_GROUP_MACHINES.map(e=>({...e})));setGroupChemicals(DEFAULT_GROUP_CHEMICALS.map(e=>({...e})));setCostGroupTab('group_uf_ro_plan_A');setStaffCount(3);setStaffSalary(15000);
     setSec({sources:true,target:true,split:true,membrane:false,opsTime:true,kpi:true,discharge:true,diagram:true,dilution:false,dashboard:false,waterControl:true,loss:false,analysis:false,stream:false,cost:true,costElec:true,costChem:true,costOps:true,costGroups:true});
   };
 
@@ -364,9 +381,7 @@ export default function UFROCalculator() {
     let feedFlow,ufOut,ufBypass,roIn,roOut,roRejectFlow,ufRejectFlow,totalReject,finalProduct;
     let blendValid=true,blendWarning='',bypassRO=false,actualProductTDS;
 
-    if (splitMode === 'manual_unused') {
-      if(!feedTDS){blendValid=false;blendWarning='ยังไม่ได้กรอกแหล่งน้ำ';}
-    } else if (splitMode==='manual') {
+    if (splitMode==='manual') {
       const toR=manualToRO/100,byP=1-toR;
       if(mode==='know-output'){finalProduct=productFlow;const f=byP+toR*roR;ufOut=f>0?finalProduct/f:0;feedFlow=ufR>0?ufOut/ufR:0;}else{feedFlow=mixedFeed.flow;ufOut=feedFlow*ufR;}
       ufRejectFlow=feedFlow-ufOut;roIn=ufOut*(manualToRO/100);ufBypass=ufOut-roIn;roOut=roIn*roR;roRejectFlow=roIn-roOut;finalProduct=ufBypass+roOut;totalReject=ufRejectFlow+roRejectFlow;
@@ -401,7 +416,7 @@ export default function UFROCalculator() {
     const active=['A','B','C'].filter(id=>phase15Routes[id]);
     const ratioSum=active.reduce((sum,id)=>sum+Math.max(0,toNumber(phase15RouteRatios[id])),0);
     const share=(id)=>phase15Routes[id]?(ratioSum>0?Math.max(0,toNumber(phase15RouteRatios[id]))/ratioSum:1/active.length):0;
-    const feedTDS=mixedFeed.tds,roR=(100-roReject)/100,ufR=(100-ufReject)/100,mno2R=(100-MNO2_REJECT_PCT)/100,rej=roSaltRejection/100,tssR=(100-tssReject)/100,sludgeWaterR=sludgeWaterRecovery/100;
+    const feedTDS=mixedFeed.tds,roR=(100-roReject)/100,ufR=(100-ufReject)/100,rej=roSaltRejection/100,tssR=(100-tssReject)/100,sludgeWaterR=sludgeWaterRecovery/100;
     const roPermTDS=feedTDS*(1-rej),roRejectTDS=roR<1?(feedTDS-roR*roPermTDS)/(1-roR):feedTDS;
     const solveUfRoFromProduct=(prod)=>{
       let ufOut=0,ufBypass=0,roIn=0,roOut=0,roRejectFlow=0,ufRejectFlow=0,actualProductTDS=feedTDS,calcToRO=0,calcBypass=100,bypassRO=false,blendValid=true,blendWarning='';
@@ -419,15 +434,10 @@ export default function UFROCalculator() {
       }
       actualProductTDS=bypassRO?feedTDS:(prod>0?(ufBypass*feedTDS+roOut*roPermTDS)/prod:0);
       calcToRO=ufOut>0?(roIn/ufOut)*100:0;calcBypass=ufOut>0?(ufBypass/ufOut)*100:100;
-      const mno2OutFlow=ufR>0?ufOut/ufR:0;
-      const tssOutFlow=mno2R>0?mno2OutFlow/mno2R:0;
-      const mno2RejectFlow=tssOutFlow-mno2OutFlow;
-      return{prod,product:prod,tssOutFlow,mno2OutFlow,mno2RejectFlow,ufOut,ufBypass,roIn,roOut,roRejectFlow,ufRejectFlow,actualProductTDS,calcToRO,calcBypass,blendValid,blendWarning};
+      return{prod,product:prod,ufOut,ufBypass,roIn,roOut,roRejectFlow,ufRejectFlow,actualProductTDS,calcToRO,calcBypass,blendValid,blendWarning};
     };
     const solveUfRoFromFeed=(tssOut)=>{
-      const mno2OutFlow=tssOut*mno2R;
-      const mno2RejectFlow=tssOut-mno2OutFlow;
-      let ufOut=mno2OutFlow*ufR,ufBypass=0,roIn=0,roOut=0,roRejectFlow=0,ufRejectFlow=mno2OutFlow-ufOut,actualProductTDS=feedTDS,calcToRO=0,calcBypass=100,bypassRO=false,blendValid=true,blendWarning='';
+      let ufOut=tssOut*ufR,ufBypass=0,roIn=0,roOut=0,roRejectFlow=0,ufRejectFlow=tssOut-ufOut,actualProductTDS=feedTDS,calcToRO=0,calcBypass=100,bypassRO=false,blendValid=true,blendWarning='';
       if(splitMode==='manual'){roIn=ufOut*(manualToRO/100);ufBypass=ufOut-roIn;roOut=roIn*roR;roRejectFlow=roIn-roOut;}
       else{
         let bR;
@@ -440,42 +450,38 @@ export default function UFROCalculator() {
       }
       const prod=ufBypass+roOut;actualProductTDS=bypassRO?feedTDS:(prod>0?(ufBypass*feedTDS+roOut*roPermTDS)/prod:0);
       calcToRO=ufOut>0?(roIn/ufOut)*100:0;calcBypass=ufOut>0?(ufBypass/ufOut)*100:100;
-      return{prod,product:prod,mno2OutFlow,mno2RejectFlow,ufOut,ufBypass,roIn,roOut,roRejectFlow,ufRejectFlow,actualProductTDS,calcToRO,calcBypass,blendValid,blendWarning};
+      return{prod,product:prod,ufOut,ufBypass,roIn,roOut,roRejectFlow,ufRejectFlow,actualProductTDS,calcToRO,calcBypass,blendValid,blendWarning};
     };
 
     const branch={A:{enabled:phase15Routes.A,share:share('A')},B:{enabled:phase15Routes.B,share:share('B')},C:{enabled:phase15Routes.C,share:share('C')}};
     if(mode==='know-output'){
       branch.C.product=productFlow*branch.C.share;branch.C.feedFlow=branch.C.product;
       branch.B.product=productFlow*branch.B.share;branch.B.feedFlow=tssR>0?branch.B.product/tssR:0;branch.B.tssOutFlow=branch.B.product;branch.B.tssRejectFlow=branch.B.feedFlow-branch.B.tssOutFlow;
-      branch.A.product=productFlow*branch.A.share;const aUF=solveUfRoFromProduct(branch.A.product);Object.assign(branch.A,aUF);branch.A.feedFlow=tssR>0?branch.A.tssOutFlow/tssR:0;branch.A.tssRejectFlow=branch.A.feedFlow-branch.A.tssOutFlow;
+      branch.A.product=productFlow*branch.A.share;const aUF=solveUfRoFromProduct(branch.A.product);Object.assign(branch.A,aUF);branch.A.tssOutFlow=ufR>0?branch.A.ufOut/ufR:0;branch.A.feedFlow=tssR>0?branch.A.tssOutFlow/tssR:0;branch.A.tssRejectFlow=branch.A.feedFlow-branch.A.tssOutFlow;
     } else {
       branch.C.feedFlow=mixedFeed.flow*branch.C.share;branch.C.product=branch.C.feedFlow;
       branch.B.feedFlow=mixedFeed.flow*branch.B.share;branch.B.tssOutFlow=branch.B.feedFlow*tssR;branch.B.product=branch.B.tssOutFlow;branch.B.tssRejectFlow=branch.B.feedFlow-branch.B.tssOutFlow;
       branch.A.feedFlow=mixedFeed.flow*branch.A.share;branch.A.tssOutFlow=branch.A.feedFlow*tssR;branch.A.tssRejectFlow=branch.A.feedFlow-branch.A.tssOutFlow;Object.assign(branch.A,solveUfRoFromFeed(branch.A.tssOutFlow));
     }
-    ['A','B','C'].forEach(id=>{const b=branch[id];b.feedFlow=b.enabled?toNumber(b.feedFlow):0;b.product=b.enabled?toNumber(b.product):0;b.tssOutFlow=toNumber(b.tssOutFlow);b.tssRejectFlow=toNumber(b.tssRejectFlow);b.mno2OutFlow=b.enabled?toNumber(b.mno2OutFlow):0;b.mno2RejectFlow=b.enabled?toNumber(b.mno2RejectFlow):0;b.sludgeWaterRecycle=b.tssRejectFlow*sludgeWaterR;b.sludgeWasteFlow=b.tssRejectFlow*(1-sludgeWaterR);});
+    ['A','B','C'].forEach(id=>{const b=branch[id];b.feedFlow=b.enabled?toNumber(b.feedFlow):0;b.product=b.enabled?toNumber(b.product):0;b.tssOutFlow=toNumber(b.tssOutFlow);b.tssRejectFlow=toNumber(b.tssRejectFlow);b.sludgeWaterRecycle=b.tssRejectFlow*sludgeWaterR;b.sludgeWasteFlow=b.tssRejectFlow*(1-sludgeWaterR);});
     const feedFlow=branch.A.feedFlow+branch.B.feedFlow+branch.C.feedFlow;
     const tssOutFlow=branch.A.tssOutFlow+branch.B.tssOutFlow;
     const tssRejectFlow=branch.A.tssRejectFlow+branch.B.tssRejectFlow;
     const sludgeWaterRecycle=branch.A.sludgeWaterRecycle+branch.B.sludgeWaterRecycle;
     const sludgeWasteFlow=branch.A.sludgeWasteFlow+branch.B.sludgeWasteFlow;
-    const mno2OutFlow=toNumber(branch.A.mno2OutFlow),mno2RejectFlow=toNumber(branch.A.mno2RejectFlow);
     const ufOut=toNumber(branch.A.ufOut),ufBypass=toNumber(branch.A.ufBypass),roIn=toNumber(branch.A.roIn),roOut=toNumber(branch.A.roOut),ufRejectFlow=toNumber(branch.A.ufRejectFlow),roRejectFlow=toNumber(branch.A.roRejectFlow);
     const planAProduct=branch.A.enabled?(toNumber(branch.A.product)>0?toNumber(branch.A.product):ufBypass+roOut):0;
     branch.A.product=planAProduct;
     const finalProduct=planAProduct+branch.B.product+branch.C.product;
     const productLoad=planAProduct*toNumber(branch.A.actualProductTDS)+branch.B.product*feedTDS+branch.C.product*feedTDS;
     const actualProductTDS=finalProduct>0?productLoad/finalProduct:0;
-    const ufroRejectFlow=mno2RejectFlow+ufRejectFlow+roRejectFlow;
-    const totalReject=tssRejectFlow+ufroRejectFlow;
-    const planAProductLoad=planAProduct*toNumber(branch.A.actualProductTDS);
-    const ufroRejectTDS=ufroRejectFlow>0?Math.max(0,(branch.A.tssOutFlow*feedTDS-planAProductLoad)/ufroRejectFlow):0;
+    const totalReject=tssRejectFlow+ufRejectFlow+roRejectFlow;
     const totalRejectTDS=totalReject>0?Math.max(0,(feedFlow*feedTDS-productLoad)/totalReject):0;
     const sourceAllocations=mode==='know-output'&&mixedFeed.totalRatio>0
       ? mixedFeed.sources.map(s=>({...s,actualFlow:feedFlow*(toNumber(s.ratio)/mixedFeed.totalRatio),actualRatio:(toNumber(s.ratio)/mixedFeed.totalRatio)*100}))
       : mixedFeed.sources.map(s=>({...s,actualFlow:s.actualFlow!==undefined?s.actualFlow:toNumber(s.flow)}));
     const totV=validateDischarge(totalRejectTDS),roPermCond=tds2cond(roPermTDS);
-    return {route:active.join('+'),routes:branch,routeShares:{A:share('A'),B:share('B'),C:share('C')},tssEnabled:branch.A.enabled||branch.B.enabled,ufroEnabled:branch.A.enabled,feedFlow,tssOutFlow,tssRejectFlow,mno2OutFlow,mno2RejectFlow,mno2RejectPct:MNO2_REJECT_PCT,sludgeWaterRecycle,sludgeWasteFlow,ufOut,ufBypass,roIn,roOut,roRejectFlow,ufRejectFlow,ufroRejectFlow,totalReject,finalProduct,feedTDS,ufPermTDS:feedTDS,ufRejectTDS:feedTDS,tssRejectTDS:feedTDS,mno2RejectTDS:feedTDS,roPermTDS,roRejectTDS,ufroRejectTDS,totalRejectTDS,actualProductTDS,overallRecovery:feedFlow>0?(finalProduct/feedFlow)*100:0,blendValid:branch.A.blendValid!==false,blendWarning:branch.A.blendWarning||'',sourceAllocations,totalRatio:mixedFeed.totalRatio||0,
+    return {route:active.join('+'),routes:branch,routeShares:{A:share('A'),B:share('B'),C:share('C')},tssEnabled:branch.A.enabled||branch.B.enabled,ufroEnabled:branch.A.enabled,feedFlow,tssOutFlow,tssRejectFlow,sludgeWaterRecycle,sludgeWasteFlow,ufOut,ufBypass,roIn,roOut,roRejectFlow,ufRejectFlow,totalReject,finalProduct,feedTDS,ufPermTDS:feedTDS,ufRejectTDS:feedTDS,tssRejectTDS:feedTDS,roPermTDS,roRejectTDS,totalRejectTDS,actualProductTDS,overallRecovery:feedFlow>0?(finalProduct/feedFlow)*100:0,blendValid:branch.A.blendValid!==false,blendWarning:branch.A.blendWarning||'',sourceAllocations,totalRatio:mixedFeed.totalRatio||0,
       tssRejectStatus:validateDischarge(feedTDS).severityStatus,ufRejectStatus:validateDischarge(feedTDS).severityStatus,roRejectStatus:validateDischarge(roRejectTDS).severityStatus,totalRejectStatus:totV.severityStatus,totalRejectAllowed:totV.regulatoryAllowed,totalRejectMargin:totV.margin,targetTDS,hasTargetCond,calcToRO:toNumber(branch.A.calcToRO),calcBypass:toNumber(branch.A.calcBypass),productCondStatus:hasTargetCond&&tds2cond(actualProductTDS)>targetCond?'FAIL':'PASS',roPermCond,roPermCondLimit,roPermCondStatus:branch.A.enabled?(roPermCond<=roPermCondLimit?'PASS':'FAIL'):'PASS'};
   }, [mixedFeed,phase15Routes,phase15RouteRatios,mode,productFlow,tssReject,sludgeWaterRecovery,ufReject,roReject,roSaltRejection,splitMode,manualToRO,targetTDS,hasTargetCond,targetCond,roPermCondLimit]);
 
@@ -515,10 +521,9 @@ export default function UFROCalculator() {
     const ufToRO = splitMode === 'manual' ? pct(manualToRO) : pct(calc.calcToRO);
     const finalToRil = pct(finalToRilPct);
     const treatedToWaste = pct(treatedToWastePct);
-    const rejectCond = tds2cond(calc.ufroRejectTDS);
+    const rejectCond = tds2cond(calc.totalRejectTDS);
     const rejectNeedsMix = rejectCond > REJECT_COND_LIMIT;
-    const dilutionFlow = dilution?.sourceFlows?.reduce((sum, source) => sum + toNumber(source.actualFlow), 0) || 0;
-    const treatedFlow = rejectNeedsMix ? calc.ufroRejectFlow + dilutionFlow : calc.ufroRejectFlow;
+    const treatedFlow = rejectNeedsMix ? (dilution?.finalFlow ?? calc.totalReject) : calc.totalReject;
     return {
       ufToRO,
       ufToBypass: 100 - ufToRO,
@@ -572,41 +577,6 @@ export default function UFROCalculator() {
       sourceAllocations,
     };
   }, [mixedFeed,tssReject,sludgeWaterRecovery,phase10ToSalePct,phase10HasTargetCond,phase10TargetCond,phase10HasTargetFlow,phase10TargetFlow,mode]);
-
-  const phase10CostCalc = useMemo(() => {
-    const qDay = phase10Calc.processOut * opsHours;
-    const touTotal = toNumber(peakHoursDay) + toNumber(offPeakHoursDay);
-    const peakFrac = touTotal > 0 ? toNumber(peakHoursDay) / touTotal : 0.5;
-    const avgCostKwh = peakFrac * (toNumber(peakRate) + toNumber(ftCharge)) + (1 - peakFrac) * (toNumber(offPeakRate) + toNumber(ftCharge));
-    const machineRows = phase10Machines.filter(row=>row.enabled).map(row => {
-      const dailyKwh = toNumber(row.loadKw) * toNumber(row.hoursDay);
-      const costDay = dailyKwh * avgCostKwh;
-      return {...row,dailyKwh,costDay,costPerQ:qDay>0?costDay/qDay:0};
-    });
-    const chemicalRows = phase10Chemicals.filter(row=>row.enabled).map(row => {
-      const kgDay = toNumber(row.dosageKgM3) * qDay;
-      const costDay = kgDay * toNumber(row.unitPrice);
-      return {...row,kgDay,costDay,costPerQ:qDay>0?costDay/qDay:0};
-    });
-    const elecCostDay = machineRows.reduce((s,row)=>s+row.costDay,0);
-    const chemCostDay = chemicalRows.reduce((s,row)=>s+row.costDay,0);
-    const opsCostDay = toNumber(phase10StaffCount) * toNumber(phase10StaffSalary) / 30;
-    const totalCostDay = elecCostDay + chemCostDay + opsCostDay;
-    return {
-      qDay,
-      avgCostKwh,
-      machineRows,
-      chemicalRows,
-      elecCostDay,
-      chemCostDay,
-      opsCostDay,
-      totalCostDay,
-      elecPerQ:qDay>0?elecCostDay/qDay:0,
-      chemPerQ:qDay>0?chemCostDay/qDay:0,
-      opsPerQ:qDay>0?opsCostDay/qDay:0,
-      totalPerQ:qDay>0?totalCostDay/qDay:0,
-    };
-  }, [phase10Calc,opsHours,peakRate,offPeakRate,ftCharge,peakHoursDay,offPeakHoursDay,phase10Machines,phase10Chemicals,phase10StaffCount,phase10StaffSalary]);
   const recommendations=useMemo(()=>getRecommendations(calc,splitMode),[calc,splitMode]);
 
   // ══════ ELECTRICITY COST CALC (Equipment Table + TOU) ══════
@@ -615,9 +585,8 @@ export default function UFROCalculator() {
     const prodVolDay=prodFlow*opsHours;const feedVolDay=feedFlow*opsHours;
     // Equipment daily kWh
     const eqRows = equipments.filter(e=>e.enabled&&(calc.ufroEnabled||!/UF|RO|Osmosis|High-pressure|Booster|Backwash|Flushing|Chemical Cleaning|Dosing|Scale|Reducing|Bactericide/i.test(e.name))).map(e => {
-      const loadKw = e.loadKw !== undefined ? toNumber(e.loadKw) : toNumber(e.kw) * toNumber(e.qty);
-      const dailyKwh = loadKw * toNumber(e.hoursDay);
-      return { ...e, loadKw, dailyKwh };
+      const dailyKwh = toNumber(e.kw) * toNumber(e.qty) * toNumber(e.hoursDay);
+      return { ...e, dailyKwh };
     });
     const regularDailyKwh = eqRows.reduce((s,e)=>s+e.dailyKwh,0);
     // TOU split
@@ -795,35 +764,18 @@ export default function UFROCalculator() {
     if(mode==='know-output'&&f==='ratio'){setManualSourceRatios(p=>({...p,[id]:v}));setStrategy('manual');}
     setSources(prev=>prev.map(s=>s.id===id?{...s,[f]:v}:s));
   };
-  const addSource=()=>{
-    const mx=sources.reduce((m,s)=>Math.max(m,toNumber(s.id)),0);
-    const id=mx+1;
-    setSources(prev=>[...prev,{id,name:`Source ${id}`,flow:0,ratio:0,tds:mixedFeed.tds||500,enabled:true,costWater:0,costElec:0,costChem:0,costOps:0}]);
-    setManualSourceRatios(prev=>({...prev,[id]:0}));
-  };
-  const removeSource=(id)=>{
-    if(sources.length<=1)return;
-    setSources(prev=>prev.filter(s=>s.id!==id));
-    setManualSourceRatios(prev=>{const next={...prev};delete next[id];return next;});
-  };
   const updateDilution=(id,f,v)=>{setDilutionSources(dilutionSources.map(s=>s.id===id?{...s,[f]:v}:s));};
   const updateEquip=(id,f,v)=>{setEquipments(equipments.map(e=>e.id===id?{...e,[f]:v}:e));};
   const updateCleaning=(id,f,v)=>{setCleaningEvents(cleaningEvents.map(e=>e.id===id?{...e,[f]:v}:e));};
   const updateChemical=(id,f,v)=>{setChemicalRows(chemicalRows.map(e=>e.id===id?{...e,[f]:v}:e));};
   const updateGroupMachine=(id,f,v)=>{setGroupMachines(groupMachines.map(e=>e.id===id?{...e,[f]:v}:e));};
   const updateGroupChemical=(id,f,v)=>{setGroupChemicals(groupChemicals.map(e=>e.id===id?{...e,[f]:v}:e));};
-  const updatePhase10Machine=(id,f,v)=>{setPhase10Machines(phase10Machines.map(e=>e.id===id?{...e,[f]:v}:e));};
-  const updatePhase10Chemical=(id,f,v)=>{setPhase10Chemicals(phase10Chemicals.map(e=>e.id===id?{...e,[f]:v}:e));};
-  const addEquip=()=>{const mx=equipments.reduce((m,e)=>Math.max(m,e.id),0);setEquipments([...equipments,{id:mx+1,name:'New Equipment',kw:1,qty:1,loadKw:1,hoursDay:22,enabled:true}]);};
+  const addEquip=()=>{const mx=equipments.reduce((m,e)=>Math.max(m,e.id),0);setEquipments([...equipments,{id:mx+1,name:'New Equipment',kw:1,qty:1,hoursDay:22,enabled:true}]);};
   const removeEquip=(id)=>{if(equipments.length<=1)return;setEquipments(equipments.filter(e=>e.id!==id));};
   const addGroupMachine=(groupId)=>{const mx=groupMachines.reduce((m,e)=>Math.max(m,e.id),0);setGroupMachines([...groupMachines,{id:mx+1,groupId,name:'New Machine',kw:0,qty:1,hoursDay:0,enabled:true}]);};
   const removeGroupMachine=(id)=>{setGroupMachines(groupMachines.filter(e=>e.id!==id));};
   const addGroupChemical=(groupId)=>{const mx=groupChemicals.reduce((m,e)=>Math.max(m,e.id),0);setGroupChemicals([...groupChemicals,{id:mx+1,groupId,name:'New Chemical',dosageKgM3:0,unitPrice:0,enabled:true}]);};
   const removeGroupChemical=(id)=>{setGroupChemicals(groupChemicals.filter(e=>e.id!==id));};
-  const addPhase10Machine=()=>{const mx=phase10Machines.reduce((m,e)=>Math.max(m,e.id),0);setPhase10Machines([...phase10Machines,{id:mx+1,name:'New Machine',loadKw:0,hoursDay:0,enabled:true}]);};
-  const removePhase10Machine=(id)=>{setPhase10Machines(phase10Machines.filter(e=>e.id!==id));};
-  const addPhase10Chemical=()=>{const mx=phase10Chemicals.reduce((m,e)=>Math.max(m,e.id),0);setPhase10Chemicals([...phase10Chemicals,{id:mx+1,name:'New Chemical',dosageKgM3:0,unitPrice:0,enabled:true}]);};
-  const removePhase10Chemical=(id)=>{setPhase10Chemicals(phase10Chemicals.filter(e=>e.id!==id));};
   const loadPreset=()=>{if(window.confirm('โหลด UFRO Electricity Preset?'))setEquipments(PDF_EQUIPMENT_PRESET.map(e=>({...e})));};
 
   const vol=(h)=>timeUnit==='daily'?h*opsHours:h;
@@ -911,7 +863,7 @@ export default function UFROCalculator() {
               ))}
             </div>
             <div style={S.routeDesc}>เปิดได้หลายแผนพร้อมกัน ระบบจะ normalize สัดส่วนของแผนที่เปิดอยู่และคำนวณทางน้ำให้อัตโนมัติ</div>
-            <button onClick={autoCalculatePhase15Routes} style={{...S.exportBtn,width:'100%',marginTop:8,color:O.gold,borderColor:O.gold}}>Auto calculate by Flow + Cond</button>
+            <button onClick={autoBlendPhase15Routes} style={{...S.exportBtn,width:'100%',marginTop:8,color:O.gold,borderColor:O.gold}}>Auto blend by selected plan</button>
             {phase15RouteAutoNote && <div style={{...S.routeDesc,color:O.gold,marginTop:6}}>{phase15RouteAutoNote}</div>}
             <div style={{...S.strategyTabs,gridTemplateColumns:'1fr 1fr',marginTop:8}}>
               <button style={{...S.stratTab,...(phase15RouteInputMode==='percent'?S.stratTabActive:{})}} onClick={()=>setPhase15RouteInputMode('percent')}>Percent</button>
@@ -935,8 +887,6 @@ export default function UFROCalculator() {
               <div style={S.mixHead}>PHASE 1.5 ROUTE BALANCE</div>
               <div style={S.mixRow}><span>Raw / Mixed Feed</span><span style={S.mixVal}>{fmt(vol(calc.feedFlow),1)} {volUnit}</span></div>
               {calc.tssEnabled && <div style={S.mixRow}><span>After TSS</span><span style={S.mixVal}>{fmt(vol(calc.tssOutFlow),1)} {volUnit}</span></div>}
-              {calc.ufroEnabled && <div style={S.mixRow}><span>MnO₂ Reject ({fmt(calc.mno2RejectPct,0)}%)</span><span style={{...S.mixVal,color:O.warn}}>{fmt(vol(calc.mno2RejectFlow),1)} {volUnit}</span></div>}
-              {calc.ufroEnabled && <div style={S.mixRow}><span>After MnO₂</span><span style={S.mixVal}>{fmt(vol(calc.mno2OutFlow),1)} {volUnit}</span></div>}
               {calc.ufroEnabled && <div style={S.mixRow}><span>UF/RO Product</span><span style={S.mixVal}>{fmt(vol(calc.finalProduct),1)} {volUnit}</span></div>}
               {!calc.ufroEnabled && <div style={S.mixRow}><span>Bypass To Final Tank</span><span style={S.mixVal}>{fmt(vol(calc.finalProduct),1)} {volUnit}</span></div>}
               <div style={S.mixRow}><span>Wastewater / Reject Tank</span><span style={{...S.mixVal,color:O.warn}}>{fmt(vol(calc.totalReject),1)} {volUnit}</span></div>
@@ -1033,11 +983,10 @@ export default function UFROCalculator() {
           </Section>
 
           <Section title="สัดส่วน UF Split" open={sec.split} onToggle={()=>toggle('split')}>
-            <div style={{display:'flex',gap:6}}>
+            <div style={{...S.strategyTabs,gridTemplateColumns:'1fr 1fr'}}>
               <button style={{...S.stratTab,...(splitMode==='auto'?S.stratTabActive:{})}} onClick={()=>setSplitMode('auto')}>Auto Blend</button>
               <button style={{...S.stratTab,...(splitMode==='manual'?S.stratTabActive:{})}} onClick={()=>setSplitMode('manual')}>Manual Split</button>
             </div>
-            <div style={{fontSize:10,color:O.text2,marginTop:8,fontFamily:mono}}>UF split controls the RO feed and bypass ratio. MnO₂ is shown on the diagram only as a reserved placeholder.</div>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:6,marginTop:8}}>
               <div><div style={S.srcFieldLabel}>To RO (%)</div><div style={{...S.srcInputWrap,...(splitMode==='auto'?S.srcInputRO:{})}}>
                 <NumInput value={splitMode==='manual'?manualToRO:parseFloat(calc.calcToRO.toFixed(1))} onValueChange={v=>setManualToRO(Math.max(0,Math.min(100,v)))} style={S.srcInput} readOnly={splitMode==='auto'}/><span style={S.srcUnit}>%</span></div></div>
@@ -1189,7 +1138,7 @@ export default function UFROCalculator() {
               <div style={{textAlign:'center'}}><div style={{fontSize:11,color:O.text3,marginBottom:4}}>Product vs Reject</div>
                 <DonutChart segments={[{label:'Product',value:calc.finalProduct,color:O.accent},{label:'Reject',value:calc.totalReject,color:O.warn}]} centerLabel={`${fmt(calc.overallRecovery,0)}%`} centerSub="Recovery"/></div>
               <div style={{textAlign:'center'}}><div style={{fontSize:11,color:O.text3,marginBottom:4}}>UF vs RO Reject</div>
-                <DonutChart segments={[{label:'MnO2',value:calc.mno2RejectFlow,color:O.accent},{label:'UF',value:calc.ufRejectFlow,color:O.warn},{label:'RO',value:calc.roRejectFlow,color:O.gold}]} centerLabel={fmt(vol(calc.totalReject),0)} centerSub={volUnit}/></div>
+                <DonutChart segments={[{label:'UF',value:calc.ufRejectFlow,color:O.warn},{label:'RO',value:calc.roRejectFlow,color:O.gold}]} centerLabel={fmt(vol(calc.totalReject),0)} centerSub={volUnit}/></div>
               <div style={{textAlign:'center'}}><div style={{fontSize:11,color:O.text3,marginBottom:4}}>Flow Split</div>
                 <DonutChart segments={[{label:'RO Feed',value:calc.roIn,color:O.cyan},{label:'Bypass',value:calc.ufBypass,color:O.accent},{label:'UF Rej',value:calc.ufRejectFlow,color:O.warn},{label:'RO Rej',value:calc.roRejectFlow,color:'#a8624a'}]} centerLabel={fmt(vol(calc.feedFlow),0)} centerSub="Feed"/></div>
             </div>
@@ -1217,7 +1166,7 @@ export default function UFROCalculator() {
             {recTab==='engineering' && <div style={{fontSize:11,color:O.text2,lineHeight:2,fontFamily:mono}}>
               <div>Final Cond = (Qr×Cr + ΣQd×Cd) / (Qr + ΣQd)</div>
               <div>Required Qd = Qr × (Cr − Ct) / (Ct − Cd)</div>
-              <div>TDS = Cond × {COND_TO_TDS} · kWh = Load kW × hours</div>
+              <div>TDS = Cond × {COND_TO_TDS} · kWh = kW × hours</div>
             </div>}
           </Section>
 
@@ -1232,8 +1181,6 @@ export default function UFROCalculator() {
                 {calc.tssEnabled && <StreamRow name="①.1 TSS Product" flow={vol(calc.tssOutFlow)} tds={calc.feedTDS} pct={calc.tssOutFlow/calc.feedFlow*100} bold/>}
                 {calc.tssEnabled && <StreamRow name="①.2 TSS Reject / Sludge Feed" flow={vol(calc.tssRejectFlow)} tds={calc.tssRejectTDS} pct={calc.tssRejectFlow/calc.feedFlow*100} loss status={calc.tssRejectStatus}/>}
                 {calc.tssEnabled && <StreamRow name="├ Sludge Pond Water Return" flow={vol(calc.sludgeWaterRecycle)} tds={calc.feedTDS} pct={calc.sludgeWaterRecycle/calc.feedFlow*100} sub/>}
-                {calc.ufroEnabled && <StreamRow name="①.2 MnO₂ Reject" flow={vol(calc.mno2RejectFlow)} tds={calc.mno2RejectTDS} pct={calc.mno2RejectFlow/calc.feedFlow*100} loss/>}
-                {calc.ufroEnabled && <StreamRow name="①.3 After MnO₂" flow={vol(calc.mno2OutFlow)} tds={calc.feedTDS} pct={calc.mno2OutFlow/calc.feedFlow*100} bold/>}
                 <StreamRow name="② UF Permeate" flow={vol(calc.ufOut)} tds={calc.ufPermTDS} pct={calc.ufOut/calc.feedFlow*100}/>
                 <StreamRow name="③ UF Reject" flow={vol(calc.ufRejectFlow)} tds={calc.ufRejectTDS} pct={calc.ufRejectFlow/calc.feedFlow*100} loss status={calc.ufRejectStatus}/>
                 <StreamRow name="④ RO Feed" flow={vol(calc.roIn)} tds={calc.feedTDS} pct={calc.roIn/calc.feedFlow*100}/>
@@ -1321,8 +1268,8 @@ export default function UFROCalculator() {
                 <table style={{...S.table,fontSize:11}}>
                   <thead><tr>
                     <th style={{...S.th,minWidth:160}}>Equipment / Station</th>
-                    <th style={{...S.th,textAlign:'right',minWidth:60}}>Load kW</th>
-                    <th style={{...S.th,textAlign:'right',minWidth:40}}>Op Qty</th>
+                    <th style={{...S.th,textAlign:'right',minWidth:60}}>kW/unit</th>
+                    <th style={{...S.th,textAlign:'right',minWidth:40}}>Qty</th>
                     <th style={{...S.th,textAlign:'right',minWidth:55}}>h/day</th>
                     <th style={{...S.th,textAlign:'right',minWidth:70}}>kWh/day</th>
                     <th style={{...S.th,textAlign:'right',minWidth:70}}>฿/day</th>
@@ -1334,7 +1281,7 @@ export default function UFROCalculator() {
                     {elecCalc.eqWithCost.map((eq)=>(
                       <tr key={eq.id} style={S.tr}>
                         <td style={S.td}><input type="text" value={eq.name} onChange={e=>updateEquip(eq.id,'name',e.target.value)} style={{...S.srcInput,fontSize:11,width:'100%'}}/></td>
-                        <td style={{...S.td,textAlign:'right'}}><NumInput value={eq.loadKw} onValueChange={v=>updateEquip(eq.id,'loadKw',v)} style={{...S.srcInput,textAlign:'right',width:50}}/></td>
+                        <td style={{...S.td,textAlign:'right'}}><NumInput value={eq.kw} onValueChange={v=>updateEquip(eq.id,'kw',v)} style={{...S.srcInput,textAlign:'right',width:50}}/></td>
                         <td style={{...S.td,textAlign:'right'}}><NumInput value={eq.qty} onValueChange={v=>updateEquip(eq.id,'qty',v)} style={{...S.srcInput,textAlign:'right',width:30}}/></td>
                         <td style={{...S.td,textAlign:'right'}}><NumInput value={eq.hoursDay} onValueChange={v=>updateEquip(eq.id,'hoursDay',v)} style={{...S.srcInput,textAlign:'right',width:40}}/></td>
                         <td style={{...S.td,textAlign:'right',color:O.text1}}>{fmt(eq.dailyKwh,1)}</td>
@@ -1378,7 +1325,7 @@ export default function UFROCalculator() {
                   </table>
                 </div>
                 <div style={{fontSize:10,color:O.text3,lineHeight:1.7,marginTop:8,fontFamily:mono}}>
-                  <div>Note: ค่าไฟเดินเครื่องปกติ = Σ(Load kW × h/day) × TOU rate แล้วหารด้วย Q product ต่อวัน</div>
+                  <div>Note: ค่าไฟเดินเครื่องปกติ = Σ(kW × Qty × h/day) × TOU rate แล้วหารด้วย Q product ต่อวัน</div>
                   <div>UF Online Chemical Cleaning ใช้ interval 7 วัน: ฿/Q = (kW × Qty × h/event × avg ฿/kWh) ÷ Q ที่ผลิตได้ใน 7 วัน</div>
                   <div>RO CIP ใช้ interval 60 วัน: ฿/Q = (kW × Qty × h/event × avg ฿/kWh) ÷ Q ที่ผลิตได้ใน 60 วัน</div>
                 </div>
@@ -1536,17 +1483,14 @@ export default function UFROCalculator() {
           </Section>
 
           <footer style={S.footer}>
-            <span style={{color:O.text3}}>Cond = TDS × {TDS_TO_COND} · Limit: {REJECT_COND_LIMIT.toLocaleString()} µS/cm · kWh = Load kW × h</span>
+            <span style={{color:O.text3}}>Cond = TDS × {TDS_TO_COND} · Limit: {REJECT_COND_LIMIT.toLocaleString()} µS/cm · kWh = kW × h</span>
             <span style={{color:O.accent}}>v8.0</span>
           </footer>
         </main>
       </div> : activeTab==='phase10' ? <Phase10Panel
         phase10Calc={phase10Calc}
-        sources={sources}
-        sourceAllocations={phase10Calc.sourceAllocations}
+        sources={phase10Calc.sourceAllocations}
         updateSource={updateSource}
-        addSource={addSource}
-        removeSource={removeSource}
         mode={mode}
         strategy={strategy}
         handleStrategyChange={handleStrategyChange}
@@ -1570,19 +1514,6 @@ export default function UFROCalculator() {
         volUnit={volUnit}
         timeUnit={timeUnit}
         opsHours={opsHours}
-        phase10CostCalc={phase10CostCalc}
-        phase10Machines={phase10Machines}
-        updatePhase10Machine={updatePhase10Machine}
-        addPhase10Machine={addPhase10Machine}
-        removePhase10Machine={removePhase10Machine}
-        phase10Chemicals={phase10Chemicals}
-        updatePhase10Chemical={updatePhase10Chemical}
-        addPhase10Chemical={addPhase10Chemical}
-        removePhase10Chemical={removePhase10Chemical}
-        phase10StaffCount={phase10StaffCount}
-        setPhase10StaffCount={setPhase10StaffCount}
-        phase10StaffSalary={phase10StaffSalary}
-        setPhase10StaffSalary={setPhase10StaffSalary}
       /> : <FutureTab activeTab={activeTab}/>}
     </div>
   );
@@ -1602,7 +1533,7 @@ function FutureTab({activeTab}) {
   </div>;
 }
 
-function Phase10Panel({phase10Calc,sources,sourceAllocations,updateSource,addSource,removeSource,mode,strategy,handleStrategyChange,tssReject,setTssReject,sludgeWaterRecovery,setSludgeWaterRecovery,phase10ToSalePct,setPhase10ToSalePct,phase10HasTargetCond,setPhase10HasTargetCond,phase10TargetCond,setPhase10TargetCond,phase10HasTargetFlow,setPhase10HasTargetFlow,phase10TargetFlow,setPhase10TargetFlow,fmt,fmtC,vol,volUnit,timeUnit,opsHours,phase10CostCalc,phase10Machines,updatePhase10Machine,addPhase10Machine,removePhase10Machine,phase10Chemicals,updatePhase10Chemical,addPhase10Chemical,removePhase10Chemical,phase10StaffCount,setPhase10StaffCount,phase10StaffSalary,setPhase10StaffSalary}) {
+function Phase10Panel({phase10Calc,sources,updateSource,mode,strategy,handleStrategyChange,tssReject,setTssReject,sludgeWaterRecovery,setSludgeWaterRecovery,phase10ToSalePct,setPhase10ToSalePct,phase10HasTargetCond,setPhase10HasTargetCond,phase10TargetCond,setPhase10TargetCond,phase10HasTargetFlow,setPhase10HasTargetFlow,phase10TargetFlow,setPhase10TargetFlow,fmt,fmtC,vol,volUnit,timeUnit,opsHours}) {
   return <div style={S.grid} className="ufro-grid">
     <aside style={S.sidebar}>
       <Section title="Phase 1.0 Control" open>
@@ -1646,16 +1577,12 @@ function Phase10Panel({phase10Calc,sources,sourceAllocations,updateSource,addSou
       <Section title="แหล่งน้ำดิบ (Feed Sources)" open>
         {mode==='know-output' && <div style={S.strategyTabs}>{['optimize','equal','manual'].map(s=>(
           <button key={s} style={{...S.stratTab,...(strategy===s?S.stratTabActive:{})}} onClick={()=>handleStrategyChange(s)}>{s==='optimize'?'Optimize':s==='equal'?'Equal':'Manual'}</button>))}</div>}
-        <div style={{display:'flex',gap:6,marginTop:8}}>
-          <button onClick={addSource} style={{...S.exportBtn,color:O.pass,borderColor:O.pass}}>+ Source</button>
-        </div>
         <div style={{display:'flex',flexDirection:'column',gap:6,marginTop:8}}>
           {sources.map((s,i)=><div key={s.id} style={{...S.srcCard,...(s.enabled?S.srcCardOn:{})}}>
             <div style={S.srcHeader}>
               <button style={{...S.srcToggle,...(s.enabled?S.srcToggleOn:{})}} onClick={()=>updateSource(s.id,'enabled',!s.enabled)}>{s.enabled?'●':'○'}</button>
               <input type="text" value={s.name} onChange={e=>updateSource(s.id,'name',e.target.value)} style={S.srcName} disabled={!s.enabled}/>
               <span style={S.srcIdx}>S{i+1}</span>
-              {sources.length>1 && <button onClick={()=>removeSource(s.id)} style={{background:'none',border:'none',color:O.fail,cursor:'pointer',fontSize:14,lineHeight:1}}>×</button>}
             </div>
             {s.enabled && <div style={{display:'flex',flexDirection:'column',gap:5,marginTop:8}}>
               <div style={S.srcInputs}>
@@ -1677,98 +1604,9 @@ function Phase10Panel({phase10Calc,sources,sourceAllocations,updateSource,addSou
         <KPI label="Cond Target" value={phase10Calc.targetCondStatus} unit="" badge={phase10Calc.targetCondStatus==='OFF'?undefined:phase10Calc.targetCondStatus}/>
         <KPI label="Flow Target" value={phase10Calc.targetFlowStatus} unit="" badge={phase10Calc.targetFlowStatus==='OFF'?undefined:phase10Calc.targetFlowStatus}/>
       </div>
-      <Section title="ประมาณการต้นทุน (Cost / Q)" open>
-        <div style={{display:'grid',gridTemplateColumns:'repeat(auto-fit,minmax(160px,1fr))',gap:8,marginBottom:10}}>
-          <KPI label="Q Phase 1 / day" value={fmt(phase10CostCalc.qDay,0)} unit="m³/day"/>
-          <KPI label="Electricity" value={fmt(phase10CostCalc.elecPerQ,3)} unit="฿/m³"/>
-          <KPI label="Chemical" value={fmt(phase10CostCalc.chemPerQ,3)} unit="฿/m³"/>
-          <KPI label="Operation" value={fmt(phase10CostCalc.opsPerQ,3)} unit="฿/m³"/>
-          <KPI label="Total Cost / Q" value={fmt(phase10CostCalc.totalPerQ,3)} unit="฿/m³" highlight/>
-        </div>
-        <div style={S.mixBox}>
-          <div style={S.mixHead}>ELECTRICITY</div>
-          <div style={{display:'flex',gap:6,marginBottom:8}}>
-            <button onClick={addPhase10Machine} style={{...S.exportBtn,color:O.accent,borderColor:O.accent}}>+ Machine</button>
-          </div>
-          <div style={S.tableScroll}>
-            <table style={{...S.table,fontSize:11}}>
-              <thead><tr>
-                <th style={S.th}>On</th>
-                <th style={{...S.th,minWidth:170}}>Equipment</th>
-                <th style={{...S.th,textAlign:'right'}}>Load kW</th>
-                <th style={{...S.th,textAlign:'right'}}>h/day</th>
-                <th style={{...S.th,textAlign:'right'}}>kWh/day</th>
-                <th style={{...S.th,textAlign:'right'}}>฿/day</th>
-                <th style={{...S.th,textAlign:'right'}}>฿/Q</th>
-                <th style={S.th}></th>
-              </tr></thead>
-              <tbody>
-                {phase10Machines.map(row=>{
-                  const calcRow=phase10CostCalc.machineRows.find(x=>x.id===row.id)||{};
-                  return <tr key={row.id} style={S.tr}>
-                    <td style={{...S.td,textAlign:'center'}}><input type="checkbox" checked={row.enabled} onChange={e=>updatePhase10Machine(row.id,'enabled',e.target.checked)}/></td>
-                    <td style={S.td}><input type="text" value={row.name} onChange={e=>updatePhase10Machine(row.id,'name',e.target.value)} style={{...S.srcInput,fontSize:11,width:'100%'}}/></td>
-                    <td style={{...S.td,textAlign:'right'}}><NumInput value={row.loadKw} onValueChange={v=>updatePhase10Machine(row.id,'loadKw',v)} style={{...S.srcInput,textAlign:'right',width:58}}/></td>
-                    <td style={{...S.td,textAlign:'right'}}><NumInput value={row.hoursDay} onValueChange={v=>updatePhase10Machine(row.id,'hoursDay',v)} style={{...S.srcInput,textAlign:'right',width:48}}/></td>
-                    <td style={{...S.td,textAlign:'right',color:O.text1}}>{fmt(calcRow.dailyKwh||0,1)}</td>
-                    <td style={{...S.td,textAlign:'right',color:O.accent}}>{fmt(calcRow.costDay||0,1)}</td>
-                    <td style={{...S.td,textAlign:'right',color:O.gold}}>{fmt(calcRow.costPerQ||0,4)}</td>
-                    <td style={{...S.td,textAlign:'center'}}><button onClick={()=>removePhase10Machine(row.id)} style={{background:'none',border:'none',color:O.fail,cursor:'pointer',fontSize:14}}>×</button></td>
-                  </tr>;
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-        <div style={{...S.mixBox,marginTop:10}}>
-          <div style={S.mixHead}>CHEMICAL</div>
-          <div style={{display:'flex',gap:6,marginBottom:8}}>
-            <button onClick={addPhase10Chemical} style={{...S.exportBtn,color:O.accent,borderColor:O.accent}}>+ Chemical</button>
-          </div>
-          <div style={S.tableScroll}>
-            <table style={{...S.table,fontSize:11}}>
-              <thead><tr>
-                <th style={S.th}>On</th>
-                <th style={{...S.th,minWidth:170}}>Chemical</th>
-                <th style={{...S.th,textAlign:'right'}}>kg/m³</th>
-                <th style={{...S.th,textAlign:'right'}}>฿/kg</th>
-                <th style={{...S.th,textAlign:'right'}}>kg/day</th>
-                <th style={{...S.th,textAlign:'right'}}>฿/day</th>
-                <th style={{...S.th,textAlign:'right'}}>฿/Q</th>
-                <th style={S.th}></th>
-              </tr></thead>
-              <tbody>
-                {phase10Chemicals.map(row=>{
-                  const calcRow=phase10CostCalc.chemicalRows.find(x=>x.id===row.id)||{};
-                  return <tr key={row.id} style={S.tr}>
-                    <td style={{...S.td,textAlign:'center'}}><input type="checkbox" checked={row.enabled} onChange={e=>updatePhase10Chemical(row.id,'enabled',e.target.checked)}/></td>
-                    <td style={S.td}><input type="text" value={row.name} onChange={e=>updatePhase10Chemical(row.id,'name',e.target.value)} style={{...S.srcInput,fontSize:11,width:'100%'}}/></td>
-                    <td style={{...S.td,textAlign:'right'}}><NumInput value={row.dosageKgM3} onValueChange={v=>updatePhase10Chemical(row.id,'dosageKgM3',v)} style={{...S.srcInput,textAlign:'right',width:62}}/></td>
-                    <td style={{...S.td,textAlign:'right'}}><NumInput value={row.unitPrice} onValueChange={v=>updatePhase10Chemical(row.id,'unitPrice',v)} style={{...S.srcInput,textAlign:'right',width:58}}/></td>
-                    <td style={{...S.td,textAlign:'right',color:O.text1}}>{fmt(calcRow.kgDay||0,2)}</td>
-                    <td style={{...S.td,textAlign:'right',color:O.accent}}>{fmt(calcRow.costDay||0,1)}</td>
-                    <td style={{...S.td,textAlign:'right',color:O.gold}}>{fmt(calcRow.costPerQ||0,4)}</td>
-                    <td style={{...S.td,textAlign:'center'}}><button onClick={()=>removePhase10Chemical(row.id)} style={{background:'none',border:'none',color:O.fail,cursor:'pointer',fontSize:14}}>×</button></td>
-                  </tr>;
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-        <div style={{...S.mixBox,marginTop:10,borderColor:O.gold}}>
-          <div style={S.mixHead}>OPERATION</div>
-          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
-            <div style={S.srcField}><label style={S.srcFieldLabel}>Staff</label><div style={S.srcInputWrap}><NumInput value={phase10StaffCount} onValueChange={setPhase10StaffCount} style={S.srcInput}/><span style={S.srcUnit}>คน</span></div></div>
-            <div style={S.srcField}><label style={S.srcFieldLabel}>Salary / month</label><div style={S.srcInputWrap}><NumInput value={phase10StaffSalary} onValueChange={setPhase10StaffSalary} style={S.srcInput}/><span style={S.srcUnit}>฿</span></div></div>
-          </div>
-          <div style={{...S.mixRow,borderTop:`1px dashed ${O.border}`,paddingTop:6,marginTop:8}}><span>Operation Cost</span><span style={S.mixVal}>{fmt(phase10CostCalc.opsCostDay,1)} ฿/day · {fmt(phase10CostCalc.opsPerQ,4)} ฿/m³</span></div>
-          <div style={S.mixRow}><span>Total Phase 1.0 Cost</span><span style={{...S.mixVal,color:O.gold,fontSize:14}}>{fmt(phase10CostCalc.totalCostDay,1)} ฿/day · {fmt(phase10CostCalc.totalPerQ,4)} ฿/m³</span></div>
-          <div style={{fontSize:10,color:O.text3,lineHeight:1.6,marginTop:6,fontFamily:mono}}>Cost / Q uses Phase 1.0 product after TSS: Q = After TSS × operating hours/day.</div>
-        </div>
-      </Section>
       <Section title="Phase 1.0 Diagram" open>
         <div style={S.diagramScrollWrapper}>
-          <Phase10Diagram phase10Calc={phase10Calc} sources={sourceAllocations} fmt={fmt} fmtC={fmtC} vol={vol} volUnit={volUnit}/>
+          <Phase10Diagram phase10Calc={phase10Calc} sources={sources} fmt={fmt} fmtC={fmtC} vol={vol} volUnit={volUnit}/>
         </div>
       </Section>
     </main>
@@ -1776,8 +1614,7 @@ function Phase10Panel({phase10Calc,sources,sourceAllocations,updateSource,addSou
 }
 
 function Phase10Diagram({phase10Calc,sources,fmt,fmtC,vol,volUnit}) {
-  const activeSources = sources.filter(s=>s.enabled && (modeFlow(s)>0.0001 || toNumber(s.ratio)>0));
-  const srcs = activeSources.slice(0,8);
+  const srcs = sources.filter(s=>s.enabled).slice(0,5);
   const node = (x,y,w,h,title,value,accent=O.cyan,cond) => <g filter="url(#nodeShadow)">
     <rect x={x} y={y} width={w} height={h} rx="4" fill={O.bg2} stroke={accent}/>
     <rect x={x} y={y} width={w} height="4" rx="4" fill={accent}/>
@@ -1796,9 +1633,8 @@ function Phase10Diagram({phase10Calc,sources,fmt,fmtC,vol,volUnit}) {
     <text x="48" y="70" fill={O.text1} fontSize="26" fontWeight="800" fontFamily={mono}>Phase 1.0</text>
     <rect x="330" y="150" width="520" height="420" rx="8" fill="#23180a" fillOpacity="0.42" stroke={O.gold}/>
     <text x="350" y="178" fill={O.gold} fontSize="11" fontWeight="800" fontFamily={mono}>TSS REMOVAL SYSTEM</text>
-    {srcs.map((s,i)=>node(60,92+i*48,145,38,`Source ${i+1}`,`${fmt(vol(modeFlow(s)),1)} ${volUnit}`,O.pass,fmtC(s.tds || phase10Calc.feedTDS)))}
-    {srcs.map((s,i)=>arrow(`M 205 ${111+i*48} H 260 V 211 H 349`,O.text1))}
-    {activeSources.length>8 && <text x="62" y="493" fill={O.text3} fontSize="9" fontFamily={mono}>+ {activeSources.length-8} more sources in table</text>}
+    {srcs.map((s,i)=>node(60,104+i*58,145,42,`Source ${i+1}`,`${fmt(vol(modeFlow(s)),1)} ${volUnit}`,O.pass,fmtC(s.tds || phase10Calc.feedTDS)))}
+    {srcs.map((s,i)=>arrow(`M 205 ${125+i*58} H 260 V 218 H 349`,O.text1))}
     {node(349,190,130,42,'Inlet',`${fmt(vol(phase10Calc.feedFlow),1)} ${volUnit}`,O.cyan,fmtC(phase10Calc.feedTDS))}
     {node(500,112,110,42,'PAC',undefined,O.fail)}
     {node(630,112,110,42,'POLYMER',undefined,O.fail)}
@@ -2193,7 +2029,7 @@ function SvgBlueprintPhase15Diagram({svgRef,calc,sources,dilutionSources,waterCo
   const blendById = new Map((dilutionSources || []).map(s => [String(s.id), s]));
   const header = `Active: ${['A','B','C'].filter(active).join('+') || '-'} | Product ${value(calc.finalProduct, 1)} ${volUnit} | Reject ${value(calc.totalReject, 1)} ${volUnit}`;
   const statusColor = finalAllowed ? ({PASS:O.pass,WARNING:O.gold,FAIL:O.fail}[finalSeverity] || O.pass) : O.fail;
-  const rejectCond = waterControl.rejectCond ?? tds2cond(calc.ufroRejectTDS);
+  const rejectCond = waterControl.rejectCond ?? tds2cond(calc.totalRejectTDS);
   const rejectNeedsMix = waterControl.rejectNeedsMix ?? rejectCond > REJECT_COND_LIMIT;
   const mixOp = rejectNeedsMix ? 1 : 0.18;
   const directOp = rejectNeedsMix ? 0.18 : 1;
@@ -2205,13 +2041,11 @@ function SvgBlueprintPhase15Diagram({svgRef,calc,sources,dilutionSources,waterCo
     finalTank:{x:1453,y:287.464,w:100,h:25.9965}, sendRIL:{x:1550,y:400,w:100,h:25.9965}, sendP10:{x:1553,y:171,w:100,h:25.9965},
     blend1:{x:800,y:488,w:100,h:25.9965}, blend2:{x:800,y:525.435,w:100,h:25.9965}, blend3:{x:800,y:562.87,w:100,h:25.9965}, blend4:{x:800,y:600.305,w:100,h:25.9965}, blend5:{x:800,y:637.74,w:100,h:25.9965},
     blendTank:{x:950,y:557,w:100,h:25.9965}, mixedTank:{x:1050,y:670,w:100,h:25.9965}, wastewater:{x:1300,y:736,w:100,h:25.9965},
-    inlet:{x:250,y:218.544,w:100,h:25.9965}, afterTss:{x:629,y:285,w:100,h:25.9965},
+    inlet:{x:250,y:218.544,w:100,h:25.9965}, afterTss:{x:700,y:281.976,w:100,h:25.9965},
     uf:{x:900,y:281.976,w:100,h:25.9965}, ufReject:{x:900,y:385.962,w:100,h:25.9965}, ufroReject:{x:1050,y:437.955,w:100,h:25.9965},
     ro:{x:1250,y:324,w:100,h:25.9965}, roReject:{x:1250,y:386,w:100,h:25.9965}, tankAfterUf:{x:1058,y:281.976,w:83.4457,h:26.2436}, bypass:{x:1250,y:241,w:100,h:25.9965},
     process90:{x:500,y:281.976,w:100,h:31.1958}, processReject:{x:500,y:354.766,w:100,h:31.1958}, sludge:{x:480,y:435.875,w:140,h:30.8839}, sludgeDisposal:{x:550,y:520,w:100,h:25.9965},
     source5:{x:50,y:117.678,w:100,h:25.9965}, source4:{x:50,y:164.471,w:100,h:25.9965}, source3:{x:50,y:211.265,w:100,h:25.9965}, source2:{x:50,y:259.099,w:100,h:25.9965}, source1:{x:50,y:305.893,w:100,h:25.9965},
-    mno2:{x:764,y:283,w:100,h:25.9965}, rejectTank:{x:758,y:385,w:100,h:25.9965},
-    blendTank:{x:950,y:537,w:100,h:25.9965}, mixedTank:{x:1050,y:650,w:100,h:25.9965}, wastewater:{x:1300,y:716,w:100,h:25.9965},
   };
   const flowText = (n, d = 0) => `${value(n || 0, d)} ${volUnit}`;
   const textColor = () => boardText;
@@ -2260,8 +2094,8 @@ function SvgBlueprintPhase15Diagram({svgRef,calc,sources,dilutionSources,waterCo
     sendP10Flow: waterControl.sendP10Flow ?? 0,
     treatedToWaste: waterControl.treatedToWaste ?? 100,
     treatedToReturn: waterControl.treatedToReturn ?? 0,
-    treatedFlow: waterControl.treatedFlow ?? (dilution?.finalFlow ?? calc.ufroRejectFlow),
-    wastewaterFlow: waterControl.wastewaterFlow ?? (dilution?.finalFlow ?? calc.ufroRejectFlow),
+    treatedFlow: waterControl.treatedFlow ?? (dilution?.finalFlow ?? calc.totalReject),
+    wastewaterFlow: waterControl.wastewaterFlow ?? (dilution?.finalFlow ?? calc.totalReject),
     returnFlow: waterControl.returnFlow ?? 0,
   };
   const sourceSlot = (id) => {
@@ -2349,9 +2183,6 @@ function SvgBlueprintPhase15Diagram({svgRef,calc,sources,dilutionSources,waterCo
     {arrow('M 350 231.5 H 440', pipe, 2)}
     {arrow('M 460 232 H 550 V 282', pipe, 2)}
     {box('process90', 'Process 90%', flowText(calc.tssOutFlow, 0), sourceGray, 1)}
-    {box('mno2', 'MnO₂', flowText(calc.mno2OutFlow, 0), purple, 1, {note:`Reject ${fmt(calc.mno2RejectPct,0)}%`, noteSize:7})}
-    {arrow('M 729 296.5 H 764.5', pipe, 2)}
-    {arrow('M 808.5 309 V 384', pipe, 2)}
     {arrow('M 550 313.2 V 354.8', pipe, 2)}
     {box('processReject', 'Reject 10%', flowText(calc.tssRejectFlow, 0), sourceGray, 1)}
     {arrow('M 550 386 V 435.9', pipe, 2)}
@@ -2360,17 +2191,17 @@ function SvgBlueprintPhase15Diagram({svgRef,calc,sources,dilutionSources,waterCo
     {box('sludgeDisposal', '30% Sludge', flowText(calc.sludgeWasteFlow, 0), wasteBrown, 1)}
     {line('M 480 451 H 450 V 302 H 500', gray, 2, 1, '6 5')}
     {label(438, 391, '70% return', '#cbd5e1', 8, 'middle', 800, 1)}
-    {arrow('M 600 298 H 628.5', pipe, 2)}
+    {arrow('M 600 297.5 H 700', pipe, 2)}
     {box('afterTss', 'After TSS', flowText(calc.tssOutFlow, 0), blue)}
 
     {box('planC', 'Plan C', flowText(calc.routes?.C?.product, 0), magenta, opacity('C'))}
     {arrow('M 301 218.5 V 113 H 900', magenta, strokeWidth('C'), opacity('C'))}
-    {arrow('M 1001 116.5 H 1103 V 278.5', magenta, strokeWidth('C'), opacity('C'))}
+    {arrow('M 1000 113 H 1453 V 300.5', magenta, strokeWidth('C'), opacity('C'))}
     {box('planB', 'Plan B', flowText(calc.routes?.B?.product, 0), orange, opacity('B'))}
-    {arrow('M 679 285 V 177 H 897', orange, strokeWidth('B'), opacity('B'))}
-    {arrow('M 1003 179 H 1079 V 279', orange, strokeWidth('B'), opacity('B'))}
+    {arrow('M 800 295 V 177.5 H 900', orange, strokeWidth('B'), opacity('B'))}
+    {arrow('M 1000 177.5 H 1453 V 300.5', orange, strokeWidth('B'), opacity('B'))}
 
-    {arrow('M 864.5 296.5 H 901.5', unitBlue, strokeWidth('A'), opacity('A'))}
+    {arrow('M 800 295 H 900', unitBlue, strokeWidth('A'), opacity('A'))}
     {box('uf', 'UF System', flowText(calc.ufOut, 0), unitBlue, opacity('A'), {note:`Cond ${fmtC(calc.feedTDS)} uS/cm`, noteSize:7, notePosition:'top'})}
     {arrow('M 1000 295 H 1058', unitBlue, strokeWidth('A'), opacity('A'))}
     {box('tankAfterUf', 'UF Tank', flowText(calc.ufOut, 0), unitBlue, opacity('A'), {note:`Cond ${fmtC(calc.feedTDS)} uS/cm`, noteSize:7, notePosition:'top'})}
@@ -2391,9 +2222,7 @@ function SvgBlueprintPhase15Diagram({svgRef,calc,sources,dilutionSources,waterCo
     {arrow('M 1300 350 V 386', orange, strokeWidth('A'), opacity('A'))}
     {box('roReject', 'RO Reject', flowText(calc.roRejectFlow, 0), unitBlue, opacity('A'), {note:`Cond ${fmtC(calc.roRejectTDS)} uS/cm`, noteSize:7})}
     {arrow('M 1250 399 H 1150 V 451', orange, strokeWidth('A'), opacity('A'))}
-    {box('ufroReject', 'UF/RO Reject', flowText(calc.ufroRejectFlow, 0), rejectRouteColor, opacity('A'), {note:`Cond ${fmtC(calc.ufroRejectTDS)} uS/cm`, noteSize:7, notePosition:'top'})}
-    {arrow('M 810 412.5 V 449.5 H 1043', orange, 1.75, opacity('A'))}
-    {box('rejectTank', 'MnO₂ Reject', flowText(calc.mno2RejectFlow, 0), orange, opacity('A'), {note:'Reject tank', noteSize:7})}
+    {box('ufroReject', 'UF/RO Reject', flowText(calc.totalReject, 0), rejectRouteColor, opacity('A'), {note:`Cond ${fmtC(calc.totalRejectTDS)} uS/cm`, noteSize:7, notePosition:'top'})}
 
     {box('finalTank', 'Final Tank', flowText(calc.finalProduct, 0), blue, 1, {note:`Product ${fmtC(calc.actualProductTDS)} uS/cm`, noteSize:7})}
     {arrow('M 1553.5 300 H 1598.5', pipe, 2)}
@@ -2412,18 +2241,18 @@ function SvgBlueprintPhase15Diagram({svgRef,calc,sources,dilutionSources,waterCo
       const mid = p.y + p.h / 2;
       return <g key={`blend-pipe-${id}`} opacity={failOp}>{arrow(`M ${p.x+p.w} ${mid} H 925 V 563 H 950`, pipe, 1.8)}</g>;
     })}
-    {arrow('M 1128.5 465.5 V 649', green, 1.95, opacity('A') * directOp)}
-    {label(1143, 618, 'DIRECT OK <=6000', green, 7, 'start', 900, opacity('A') * directOp)}
-    {arrow('M 1083 468 V 539 H 1050', orange, 1.75, opacity('A') * mixOp)}
-    {label(1092, 526, rejectNeedsMix ? 'MIX REQUIRED' : 'MIX STANDBY', rejectNeedsMix ? orange : boardMuted, 7, 'start', 900, opacity('A') * Math.max(mixOp, 0.35))}
+    {arrow('M 1100 464 V 563 H 1050', orange, 1.75, opacity('A') * mixOp)}
+    {label(1088, 541, rejectNeedsMix ? 'MIX REQUIRED' : 'MIX STANDBY', rejectNeedsMix ? orange : boardMuted, 7, 'start', 900, opacity('A') * Math.max(mixOp, 0.35))}
+    {arrow('M 1100 464 V 670', green, 1.75, opacity('A') * directOp)}
+    {label(1114, 631, 'DIRECT OK <=6000', green, 7, 'start', 900, opacity('A') * directOp)}
     {box('blendTank', 'Blend Tank', flowText(wc.treatedFlow, 0), blue, mixOp, {note:`Final ${finalDischargeCond} uS/cm`, noteSize:7, notePosition:'top'})}
-    {arrow('M 1050.5 554.5 H 1083 V 647.5', pipe, 1.75, mixOp)}
+    {arrow('M 1000 583 V 683 H 1050', pipe, 1.75, mixOp)}
     {box('mixedTank', 'Mixed UF/RO', flowText(wc.treatedFlow, 0), blue, 1, {note:rejectNeedsMix ? 'after blend' : 'direct reject', noteSize:7})}
-    {controlNode(1100, 729.076, 1)}
-    {arrow('M 1100.5 696 V 728.5', pipe, 1.75, 1)}
+    {controlNode(1100, 749.076, 1)}
+    {arrow('M 1100.5 696 V 742.5', pipe, 1.75, 1)}
     {label(1130, 739, `${fmt(wc.treatedToWaste,0)}% waste`, red, 7, 'start', 900, 1)}
-    {label(1058, 754, `${fmt(wc.treatedToReturn,0)}% return`, red, 7, 'end', 900, 1)}
-    {arrow('M 1107 728.5 H 1298', pipe, pctWidth(wc.treatedToWaste), pctOp(wc.treatedToWaste))}
+    {label(1058, 764, `${fmt(wc.treatedToReturn,0)}% return`, red, 7, 'end', 900, 1)}
+    {arrow('M 1107 749 H 1300 V 749', pipe, pctWidth(wc.treatedToWaste), pctOp(wc.treatedToWaste))}
     {box('wastewater', 'Wastewater', flowText(wc.wastewaterFlow, 0), wasteBrown, 1, {note:`Status ${finalSeverity}`, noteSize:7})}
     {line('M 1094.5 750 H 299.5 V 244.5', gray, pctWidth(wc.treatedToReturn), pctOp(wc.treatedToReturn), '6 5')}
     {label(720, 764, `Return ${flowText(wc.returnFlow,0)}`, '#cbd5e1', 8, 'middle', 800, pctOp(wc.treatedToReturn))}
