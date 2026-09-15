@@ -1,4 +1,4 @@
-import { solveTssBalance, solveUfBalance, solveRoBalance } from './massBalance.js';
+import { solveTssBalance, solveUfBalance, solveRoBalance, solveRecycleClosure } from './massBalance.js';
 
 const ROUTE_IDS = ['A', 'B', 'C'];
 const finiteNonNegative = (value) => {
@@ -41,6 +41,7 @@ export function solveRoutes({
   ufRejectPct = 0,
   roRejectPct = 0,
   toRoPct = 0,
+  rejectReturnPct = 0,
 } = {}) {
   const totalFeed = finiteNonNegative(feedFlow);
   const shares = normalizedShares(routes);
@@ -102,6 +103,14 @@ export function solveRoutes({
   const ufRejectFlow = sum('ufRejectFlow');
   const roRejectFlow = sum('roRejectFlow');
   const ufRoRejectFlow = ufRejectFlow + roRejectFlow;
+  const recycleClosure = solveRecycleClosure({
+    grossFeedFlow: sum('feedFlow'),
+    productFlow,
+    sludgeRecycleFlow,
+    sludgeWasteFlow,
+    treatedRejectFlow: ufRoRejectFlow,
+    rejectReturnPct,
+  });
 
   return {
     feedFlow: sum('feedFlow'),
@@ -112,6 +121,7 @@ export function solveRoutes({
     ufRejectFlow,
     roRejectFlow,
     ufRoRejectFlow,
+    ...recycleClosure,
     shares,
     branches,
   };

@@ -41,3 +41,29 @@ export function solveRoBalance({ feedFlow = 0, rejectPct = 0 } = {}) {
   const permeateFlow = feed - rejectFlow;
   return { feedFlow: feed, permeateFlow, rejectFlow };
 }
+
+export function solveRecycleClosure({
+  grossFeedFlow = 0,
+  productFlow = 0,
+  sludgeRecycleFlow = 0,
+  sludgeWasteFlow = 0,
+  treatedRejectFlow = 0,
+  rejectReturnPct = 0,
+} = {}) {
+  const grossFeed = asNonNegativeFinite(grossFeedFlow);
+  const product = asNonNegativeFinite(productFlow);
+  const sludgeRecycle = asNonNegativeFinite(sludgeRecycleFlow);
+  const sludgeWaste = asNonNegativeFinite(sludgeWasteFlow);
+  const treatedReject = asNonNegativeFinite(treatedRejectFlow);
+  const rejectReturnFlow = treatedReject * asFraction(rejectReturnPct);
+  const finalWastewaterFlow = treatedReject - rejectReturnFlow;
+  const internalRecycleFlow = sludgeRecycle + rejectReturnFlow;
+  const externalRawFlow = Math.max(0, grossFeed - internalRecycleFlow);
+  const finalExternalWasteFlow = sludgeWaste + finalWastewaterFlow;
+  const balanceError = externalRawFlow - product - finalExternalWasteFlow;
+
+  return {
+    rejectReturnFlow, finalWastewaterFlow, internalRecycleFlow,
+    externalRawFlow, finalExternalWasteFlow, balanceError,
+  };
+}
