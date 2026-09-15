@@ -1,4 +1,4 @@
-import { mixWaterQuality } from './quality.js';
+﻿import { mixWaterQuality, conductivityFromTds, DEFAULT_TDS_EC_FACTOR } from './quality.js';
 
 const nonNegative = (value) => {
   const parsed = Number(value);
@@ -26,5 +26,41 @@ export function solveProjectNetwork({ phase10 = {}, phase15OtherFeed = {} } = {}
       toPhase15: { flow: toPhase15Flow, tds: outputTds },
     },
     phase15: { feed: phase15Feed },
+  };
+}
+
+
+export function calculateProjectKpis(input = {}) {
+  const externalRawFlow = nonNegative(input.phase10ExternalRawFlow) + nonNegative(input.phase15ExternalRawFlow);
+  const phase10Sale = {
+    flow: nonNegative(input.phase10Sale?.flow),
+    tds: nonNegative(input.phase10Sale?.tds),
+  };
+  const phase15Product = {
+    flow: nonNegative(input.phase15Product?.flow),
+    tds: nonNegative(input.phase15Product?.tds),
+  };
+  const product = mixWaterQuality([phase10Sale, phase15Product]);
+  const finalWasteFlow = nonNegative(input.finalWasteFlow);
+  const physicalLossFlow = nonNegative(input.physicalLossFlow);
+  const internalRecycleFlow = nonNegative(input.internalRecycleFlow);
+  const totalOpexPerDay = nonNegative(input.totalOpexPerDay);
+  const balanceError = externalRawFlow - product.flow - finalWasteFlow - physicalLossFlow;
+  const factor = Number.isFinite(Number(input.tdsEcFactor)) && Number(input.tdsEcFactor) > 0
+    ? Number(input.tdsEcFactor)
+    : DEFAULT_TDS_EC_FACTOR;
+  return {
+    externalRawFlow,
+    productFlow: product.flow,
+    finalWasteFlow,
+    physicalLossFlow,
+    internalRecycleFlow,
+    balanceError,
+    balanceClosed: Math.abs(balanceError) <= 1e-9,
+    netRecoveryPct: externalRawFlow > 0 ? (product.flow / externalRawFlow) * 100 : 0,
+    finalProductTds: product.tds,
+    finalProductConductivity: conductivityFromTds(product.tds, factor),
+    totalOpexPerDay,
+    opexPerM3: product.flow > 0 ? totalOpexPerDay / product.flow : 0,
   };
 }
