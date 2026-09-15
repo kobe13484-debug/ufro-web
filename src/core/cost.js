@@ -96,3 +96,29 @@ export function calculateEventChemicalCost({ chemicals = [] } = {}) {
     totalDailyEquivalentCost: rows.reduce((sum, row) => sum + row.dailyEquivalentCost, 0),
   };
 }
+
+export function calculateTotalOpex(input = {}) {
+  const productVolumePerDay = nonNegative(input.productVolumePerDay);
+  const operatingDaysPerMonth = nonNegative(input.operatingDaysPerMonth ?? 30);
+  const components = {
+    rawWater: nonNegative(input.rawWaterCostPerDay),
+    electricity: nonNegative(input.electricityCostPerDay),
+    continuousChemicals: nonNegative(input.continuousChemicalCostPerDay),
+    eventChemicals: nonNegative(input.eventChemicalCostPerDay),
+    labor: nonNegative(input.laborCostPerDay),
+    dilution: nonNegative(input.dilutionCostPerDay),
+    sludgeWaste: nonNegative(input.sludgeWasteCostPerDay),
+    other: nonNegative(input.otherCostPerDay),
+  };
+  const totalCostPerDay = Object.values(components).reduce((sum, value) => sum + value, 0);
+  const productVolumePerMonth = productVolumePerDay * operatingDaysPerMonth;
+  return {
+    components,
+    productVolumePerDay,
+    operatingDaysPerMonth,
+    totalCostPerDay,
+    costPerM3: productVolumePerDay > 0 ? totalCostPerDay / productVolumePerDay : 0,
+    totalCostPerMonth: totalCostPerDay * operatingDaysPerMonth,
+    productVolumePerMonth,
+  };
+}
