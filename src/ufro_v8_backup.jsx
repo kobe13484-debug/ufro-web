@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
+import { combineUfRoReject, combineUfRoRejectTds } from './flowMath.js';
 
 // ────── Helpers ──────
 const toNumber = (v) => { const n = parseFloat(v); return isFinite(n) ? n : 0; };
@@ -475,14 +476,16 @@ export default function UFROCalculator() {
     const finalProduct=planAProduct+branch.B.product+branch.C.product;
     const productLoad=planAProduct*toNumber(branch.A.actualProductTDS)+branch.B.product*feedTDS+branch.C.product*feedTDS;
     const actualProductTDS=finalProduct>0?productLoad/finalProduct:0;
-    const totalReject=tssRejectFlow+ufRejectFlow+roRejectFlow;
+    const ufRoRejectFlow=combineUfRoReject({ufRejectFlow,roRejectFlow});
+    const ufRoRejectTDS=combineUfRoRejectTds({ufRejectFlow,ufRejectTds:feedTDS,roRejectFlow,roRejectTds:roRejectTDS});
+    const totalReject=tssRejectFlow+ufRoRejectFlow;
     const totalRejectTDS=totalReject>0?Math.max(0,(feedFlow*feedTDS-productLoad)/totalReject):0;
     const sourceAllocations=mode==='know-output'&&mixedFeed.totalRatio>0
       ? mixedFeed.sources.map(s=>({...s,actualFlow:feedFlow*(toNumber(s.ratio)/mixedFeed.totalRatio),actualRatio:(toNumber(s.ratio)/mixedFeed.totalRatio)*100}))
       : mixedFeed.sources.map(s=>({...s,actualFlow:s.actualFlow!==undefined?s.actualFlow:toNumber(s.flow)}));
-    const totV=validateDischarge(totalRejectTDS),roPermCond=tds2cond(roPermTDS);
-    return {route:active.join('+'),routes:branch,routeShares:{A:share('A'),B:share('B'),C:share('C')},tssEnabled:branch.A.enabled||branch.B.enabled,ufroEnabled:branch.A.enabled,feedFlow,tssOutFlow,tssRejectFlow,sludgeWaterRecycle,sludgeWasteFlow,ufOut,ufBypass,roIn,roOut,roRejectFlow,ufRejectFlow,totalReject,finalProduct,feedTDS,ufPermTDS:feedTDS,ufRejectTDS:feedTDS,tssRejectTDS:feedTDS,roPermTDS,roRejectTDS,totalRejectTDS,actualProductTDS,overallRecovery:feedFlow>0?(finalProduct/feedFlow)*100:0,blendValid:branch.A.blendValid!==false,blendWarning:branch.A.blendWarning||'',sourceAllocations,totalRatio:mixedFeed.totalRatio||0,
-      tssRejectStatus:validateDischarge(feedTDS).severityStatus,ufRejectStatus:validateDischarge(feedTDS).severityStatus,roRejectStatus:validateDischarge(roRejectTDS).severityStatus,totalRejectStatus:totV.severityStatus,totalRejectAllowed:totV.regulatoryAllowed,totalRejectMargin:totV.margin,targetTDS,hasTargetCond,calcToRO:toNumber(branch.A.calcToRO),calcBypass:toNumber(branch.A.calcBypass),productCondStatus:hasTargetCond&&tds2cond(actualProductTDS)>targetCond?'FAIL':'PASS',roPermCond,roPermCondLimit,roPermCondStatus:branch.A.enabled?(roPermCond<=roPermCondLimit?'PASS':'FAIL'):'PASS'};
+    const ufRoV=validateDischarge(ufRoRejectTDS),totV=validateDischarge(totalRejectTDS),roPermCond=tds2cond(roPermTDS);
+    return {route:active.join('+'),routes:branch,routeShares:{A:share('A'),B:share('B'),C:share('C')},tssEnabled:branch.A.enabled||branch.B.enabled,ufroEnabled:branch.A.enabled,feedFlow,tssOutFlow,tssRejectFlow,sludgeWaterRecycle,sludgeWasteFlow,ufOut,ufBypass,roIn,roOut,roRejectFlow,ufRejectFlow,ufRoRejectFlow,ufRoRejectTDS,totalReject,finalProduct,feedTDS,ufPermTDS:feedTDS,ufRejectTDS:feedTDS,tssRejectTDS:feedTDS,roPermTDS,roRejectTDS,totalRejectTDS,actualProductTDS,overallRecovery:feedFlow>0?(finalProduct/feedFlow)*100:0,blendValid:branch.A.blendValid!==false,blendWarning:branch.A.blendWarning||'',sourceAllocations,totalRatio:mixedFeed.totalRatio||0,
+      tssRejectStatus:validateDischarge(feedTDS).severityStatus,ufRejectStatus:validateDischarge(feedTDS).severityStatus,roRejectStatus:validateDischarge(roRejectTDS).severityStatus,ufRoRejectStatus:ufRoV.severityStatus,ufRoRejectAllowed:ufRoV.regulatoryAllowed,ufRoRejectMargin:ufRoV.margin,totalRejectStatus:totV.severityStatus,totalRejectAllowed:totV.regulatoryAllowed,totalRejectMargin:totV.margin,targetTDS,hasTargetCond,calcToRO:toNumber(branch.A.calcToRO),calcBypass:toNumber(branch.A.calcBypass),productCondStatus:hasTargetCond&&tds2cond(actualProductTDS)>targetCond?'FAIL':'PASS',roPermCond,roPermCondLimit,roPermCondStatus:branch.A.enabled?(roPermCond<=roPermCondLimit?'PASS':'FAIL'):'PASS'};
   }, [mixedFeed,phase15Routes,phase15RouteRatios,mode,productFlow,tssReject,sludgeWaterRecovery,ufReject,roReject,roSaltRejection,splitMode,manualToRO,targetTDS,hasTargetCond,targetCond,roPermCondLimit]);
 
   // IMPORTANT MASS BALANCE LOGIC:
@@ -490,8 +493,8 @@ export default function UFROCalculator() {
   // Final Discharge Conductivity must be calculated using flow-weighted average.
   // Do NOT ignore individual dilution source flows.
   const dilution = useMemo(() => {
-    const rejectFails=!calc.totalRejectAllowed;if(!rejectFails&&!showDilutionSim)return{needed:false,rejectFails:false};
-    const Qr=calc.totalReject,Cr=tds2cond(calc.totalRejectTDS),Ct=REJECT_COND_LIMIT*(1-safetyMargin/100);
+    const rejectFails=!calc.ufRoRejectAllowed;if(!rejectFails&&!showDilutionSim)return{needed:false,rejectFails:false};
+    const Qr=calc.ufRoRejectFlow,Cr=tds2cond(calc.ufRoRejectTDS),Ct=REJECT_COND_LIMIT*(1-safetyMargin/100);
     if(dilutionMode==='auto'){
       const activeSrc=dilutionSources.filter(s=>s.enabled);
       const Cd=activeSrc.length>0?activeSrc.reduce((s,x)=>s+toNumber(x.conductivity),0)/activeSrc.length:500;
@@ -514,16 +517,16 @@ export default function UFROCalculator() {
     }
   }, [calc,dilutionSources,dilutionMode,showDilutionSim,safetyMargin]);
 
-  const finalDischargeV = useMemo(()=>{if(dilution.needed&&dilution.rejectFails&&!dilution.cannotSolve&&dilution.finalV)return dilution.finalV;return validateDischarge(calc.totalRejectTDS);},[calc,dilution]);
+  const finalDischargeV = useMemo(()=>{if(dilution.needed&&dilution.rejectFails&&!dilution.cannotSolve&&dilution.finalV)return dilution.finalV;return validateDischarge(calc.ufRoRejectTDS);},[calc,dilution]);
   const finalAllowed=finalDischargeV.regulatoryAllowed,finalSeverity=finalDischargeV.severityStatus,finalMargin=finalDischargeV.margin;
   const waterControl = useMemo(() => {
     const pct = (n) => Math.max(0, Math.min(100, toNumber(n)));
     const ufToRO = splitMode === 'manual' ? pct(manualToRO) : pct(calc.calcToRO);
     const finalToRil = pct(finalToRilPct);
     const treatedToWaste = pct(treatedToWastePct);
-    const rejectCond = tds2cond(calc.totalRejectTDS);
+    const rejectCond = tds2cond(calc.ufRoRejectTDS);
     const rejectNeedsMix = rejectCond > REJECT_COND_LIMIT;
-    const treatedFlow = rejectNeedsMix ? (dilution?.finalFlow ?? calc.totalReject) : calc.totalReject;
+    const treatedFlow = rejectNeedsMix ? (dilution?.finalFlow ?? calc.ufRoRejectFlow) : calc.ufRoRejectFlow;
     return {
       ufToRO,
       ufToBypass: 100 - ufToRO,
@@ -889,7 +892,7 @@ export default function UFROCalculator() {
               {calc.tssEnabled && <div style={S.mixRow}><span>After TSS</span><span style={S.mixVal}>{fmt(vol(calc.tssOutFlow),1)} {volUnit}</span></div>}
               {calc.ufroEnabled && <div style={S.mixRow}><span>UF/RO Product</span><span style={S.mixVal}>{fmt(vol(calc.finalProduct),1)} {volUnit}</span></div>}
               {!calc.ufroEnabled && <div style={S.mixRow}><span>Bypass To Final Tank</span><span style={S.mixVal}>{fmt(vol(calc.finalProduct),1)} {volUnit}</span></div>}
-              <div style={S.mixRow}><span>Wastewater / Reject Tank</span><span style={{...S.mixVal,color:O.warn}}>{fmt(vol(calc.totalReject),1)} {volUnit}</span></div>
+              <div style={S.mixRow}><span>UF/RO Reject Tank</span><span style={{...S.mixVal,color:O.warn}}>{fmt(vol(calc.ufRoRejectFlow),1)} {volUnit}</span></div>
               {calc.tssEnabled && <div style={S.mixRow}><span>Sludge Water Return</span><span style={S.mixVal}>{fmt(vol(calc.sludgeWaterRecycle),1)} {volUnit}</span></div>}
               {['A','B','C'].map(id=>calc.routes?.[id]?.enabled&&<div key={id} style={S.mixRow}><span>Plan {id} product</span><span style={S.mixVal}>{fmt(vol(calc.routes[id].product),1)} {volUnit}</span></div>)}
             </div>
@@ -1859,11 +1862,11 @@ function CleanPhase15Diagram({svgRef,calc,sources,dilutionSources,fmtC,fmt,vol,v
   const srcY = (i) => 165 + i * srcGap;
   const srcManifoldTop = srcs.length ? Math.min(srcY(0) + 21, 263) : 263;
   const srcManifoldBottom = srcs.length ? Math.max(srcY(srcs.length - 1) + 21, 263) : 263;
-  const header = `Active: ${['A','B','C'].filter(active).join('+') || '-'} | Product ${value(calc.finalProduct, 1)} ${volUnit} | Reject ${value(calc.totalReject, 1)} ${volUnit}`;
+  const header = `Active: ${['A','B','C'].filter(active).join('+') || '-'} | Product ${value(calc.finalProduct, 1)} ${volUnit} | UF/RO Reject ${value(calc.ufRoRejectFlow, 1)} ${volUnit}`;
   const statusColor = finalAllowed ? ({PASS:O.pass,WARNING:O.gold,FAIL:O.fail}[finalSeverity] || O.pass) : O.fail;
   const passOp = finalAllowed ? 1 : 0.28;
   const failOp = finalAllowed ? 0.28 : 1;
-  const finalDischargeCond = Math.round(dilution?.finalCond || tds2cond(calc.totalRejectTDS)).toLocaleString();
+  const finalDischargeCond = Math.round(dilution?.finalCond || tds2cond(calc.ufRoRejectTDS)).toLocaleString();
   const labelFont = "'IBM Plex Sans Thai', 'Noto Sans Thai', Inter, sans-serif";
   const node = (x,y,w,h,title,num,tone='blue',cond) => {
     const stroke = {blue,teal,amber,red,green,purple,gray}[tone] || blue;
@@ -1959,7 +1962,7 @@ function CleanPhase15Diagram({svgRef,calc,sources,dilutionSources,fmtC,fmt,vol,v
     {arrow('M 1256 382 V 421', amber, width('A'), opacity('A'))}
     {node(1190,421,132,64,'RO Reject','35','amber',fmtC(calc.roRejectTDS))}
     {arrow('M 1256 485 V 515 H 1120', amber, width('A'), opacity('A'))}
-    {node(1000,500,120,54,'Reject Tank',value(calc.totalReject,1),'amber',fmtC(calc.totalRejectTDS))}
+    {node(1000,500,120,54,'UF/RO Reject',value(calc.ufRoRejectFlow,1),'amber',fmtC(calc.ufRoRejectTDS))}
 
     <text x="860" y="190" fill={O.text1} fontSize="16" fontWeight="700" fontFamily={mono} opacity={opacity('B')}>Plan 1.5 B</text>
     <path d="M 690 332 V 210 H 780" fill="none" stroke={amber} strokeWidth={width('B')} strokeLinecap="round" strokeLinejoin="round" markerEnd={`url(#clean-${amber.replace('#','')})`} opacity={opacity('B')}/>
@@ -2027,15 +2030,15 @@ function SvgBlueprintPhase15Diagram({svgRef,calc,sources,dilutionSources,waterCo
   const gray = '#64748b';
   const sourceById = new Map((sources || []).map(s => [String(s.id), s]));
   const blendById = new Map((dilutionSources || []).map(s => [String(s.id), s]));
-  const header = `Active: ${['A','B','C'].filter(active).join('+') || '-'} | Product ${value(calc.finalProduct, 1)} ${volUnit} | Reject ${value(calc.totalReject, 1)} ${volUnit}`;
+  const header = `Active: ${['A','B','C'].filter(active).join('+') || '-'} | Product ${value(calc.finalProduct, 1)} ${volUnit} | UF/RO Reject ${value(calc.ufRoRejectFlow, 1)} ${volUnit}`;
   const statusColor = finalAllowed ? ({PASS:O.pass,WARNING:O.gold,FAIL:O.fail}[finalSeverity] || O.pass) : O.fail;
-  const rejectCond = waterControl.rejectCond ?? tds2cond(calc.totalRejectTDS);
+  const rejectCond = waterControl.rejectCond ?? tds2cond(calc.ufRoRejectTDS);
   const rejectNeedsMix = waterControl.rejectNeedsMix ?? rejectCond > REJECT_COND_LIMIT;
   const mixOp = rejectNeedsMix ? 1 : 0.18;
   const directOp = rejectNeedsMix ? 0.18 : 1;
   const rejectRouteColor = rejectNeedsMix ? orange : green;
   const failOp = mixOp;
-  const finalDischargeCond = Math.round(dilution?.finalCond || tds2cond(calc.totalRejectTDS)).toLocaleString();
+  const finalDischargeCond = Math.round(dilution?.finalCond || tds2cond(calc.ufRoRejectTDS)).toLocaleString();
   const nodePos = {
     planB:{x:900,y:164.471,w:100,h:25.9965}, planC:{x:900,y:100,w:100,h:25.9965},
     finalTank:{x:1453,y:287.464,w:100,h:25.9965}, sendRIL:{x:1550,y:400,w:100,h:25.9965}, sendP10:{x:1553,y:171,w:100,h:25.9965},
@@ -2094,8 +2097,8 @@ function SvgBlueprintPhase15Diagram({svgRef,calc,sources,dilutionSources,waterCo
     sendP10Flow: waterControl.sendP10Flow ?? 0,
     treatedToWaste: waterControl.treatedToWaste ?? 100,
     treatedToReturn: waterControl.treatedToReturn ?? 0,
-    treatedFlow: waterControl.treatedFlow ?? (dilution?.finalFlow ?? calc.totalReject),
-    wastewaterFlow: waterControl.wastewaterFlow ?? (dilution?.finalFlow ?? calc.totalReject),
+    treatedFlow: waterControl.treatedFlow ?? (dilution?.finalFlow ?? calc.ufRoRejectFlow),
+    wastewaterFlow: waterControl.wastewaterFlow ?? (dilution?.finalFlow ?? calc.ufRoRejectFlow),
     returnFlow: waterControl.returnFlow ?? 0,
   };
   const sourceSlot = (id) => {
@@ -2222,7 +2225,7 @@ function SvgBlueprintPhase15Diagram({svgRef,calc,sources,dilutionSources,waterCo
     {arrow('M 1300 350 V 386', orange, strokeWidth('A'), opacity('A'))}
     {box('roReject', 'RO Reject', flowText(calc.roRejectFlow, 0), unitBlue, opacity('A'), {note:`Cond ${fmtC(calc.roRejectTDS)} uS/cm`, noteSize:7})}
     {arrow('M 1250 399 H 1150 V 451', orange, strokeWidth('A'), opacity('A'))}
-    {box('ufroReject', 'UF/RO Reject', flowText(calc.totalReject, 0), rejectRouteColor, opacity('A'), {note:`Cond ${fmtC(calc.totalRejectTDS)} uS/cm`, noteSize:7, notePosition:'top'})}
+    {box('ufroReject', 'UF/RO Reject', flowText(calc.ufRoRejectFlow, 0), rejectRouteColor, opacity('A'), {note:`Cond ${fmtC(calc.ufRoRejectTDS)} uS/cm`, noteSize:7, notePosition:'top'})}
 
     {box('finalTank', 'Final Tank', flowText(calc.finalProduct, 0), blue, 1, {note:`Product ${fmtC(calc.actualProductTDS)} uS/cm`, noteSize:7})}
     {arrow('M 1553.5 300 H 1598.5', pipe, 2)}
