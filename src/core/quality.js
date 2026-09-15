@@ -79,3 +79,45 @@ export function solveRoQuality({
     soluteBalanceError: soluteIn - solutePermeate - soluteConcentrate,
   };
 }
+
+export function validateDischarge({
+  tds,
+  conductivity,
+  tdsEcFactor = DEFAULT_TDS_EC_FACTOR,
+  tdsLimit = 3000,
+  conductivityLimit = 6000,
+  safetyMarginPct = 0,
+} = {}) {
+  const factor = positiveFactor(tdsEcFactor);
+  const hasConductivity = Number.isFinite(Number(conductivity));
+  const hasTds = Number.isFinite(Number(tds));
+  const actualConductivity = hasConductivity
+    ? nonNegative(conductivity)
+    : conductivityFromTds(hasTds ? tds : 0, factor);
+  const actualTds = hasTds
+    ? nonNegative(tds)
+    : tdsFromConductivity(actualConductivity, factor);
+  const margin = Math.min(100, nonNegative(safetyMarginPct)) / 100;
+  const regCondLimit = nonNegative(conductivityLimit);
+  const regTdsLimit = nonNegative(tdsLimit);
+  const operatingConductivityLimit = regCondLimit * (1 - margin);
+  const operatingTdsLimit = regTdsLimit * (1 - margin);
+  const regulatoryAllowed = actualConductivity <= regCondLimit && actualTds <= regTdsLimit;
+  const operatingAllowed = actualConductivity <= operatingConductivityLimit && actualTds <= operatingTdsLimit;
+  const severityStatus = !regulatoryAllowed ? 'FAIL' : !operatingAllowed ? 'WARNING' : 'PASS';
+
+  return {
+    tds: actualTds,
+    conductivity: actualConductivity,
+    tdsLimit: regTdsLimit,
+    conductivityLimit: regCondLimit,
+    operatingTdsLimit,
+    operatingConductivityLimit,
+    regulatoryAllowed,
+    operatingAllowed,
+    requiresAction: !operatingAllowed,
+    severityStatus,
+    regulatoryConductivityMargin: regCondLimit - actualConductivity,
+    operatingConductivityMargin: operatingConductivityLimit - actualConductivity,
+  };
+}
