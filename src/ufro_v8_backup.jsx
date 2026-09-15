@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { combineUfRoReject, combineUfRoRejectTds } from './flowMath.js';
+import { buildPhase15UiModel } from './core/uiAdapter.js';
 
 // ────── Helpers ──────
 const toNumber = (v) => { const n = parseFloat(v); return isFinite(n) ? n : 0; };
@@ -413,111 +414,78 @@ export default function UFROCalculator() {
   }, [mixedFeed,targetTDS,hasTargetCond,targetCond,roPermCondLimit,productFlow,ufReject,roReject,roSaltRejection,mode,splitMode,manualToRO]);
   void baseCalc;
 
-  const calc = useMemo(() => {
-    const active=['A','B','C'].filter(id=>phase15Routes[id]);
-    const ratioSum=active.reduce((sum,id)=>sum+Math.max(0,toNumber(phase15RouteRatios[id])),0);
-    const share=(id)=>phase15Routes[id]?(ratioSum>0?Math.max(0,toNumber(phase15RouteRatios[id]))/ratioSum:1/active.length):0;
-    const feedTDS=mixedFeed.tds,roR=(100-roReject)/100,ufR=(100-ufReject)/100,rej=roSaltRejection/100,tssR=(100-tssReject)/100,sludgeWaterR=sludgeWaterRecovery/100;
-    const roPermTDS=feedTDS*(1-rej),roRejectTDS=roR<1?(feedTDS-roR*roPermTDS)/(1-roR):feedTDS;
-    const solveUfRoFromProduct=(prod)=>{
-      let ufOut=0,ufBypass=0,roIn=0,roOut=0,roRejectFlow=0,ufRejectFlow=0,actualProductTDS=feedTDS,calcToRO=0,calcBypass=100,bypassRO=false,blendValid=true,blendWarning='';
-      if(splitMode==='manual'){
-        const toR=manualToRO/100,byP=1-toR,f=byP+toR*roR;
-        ufOut=f>0?prod/f:0;ufRejectFlow=ufR>0?ufOut/ufR-ufOut:0;roIn=ufOut*toR;ufBypass=ufOut-roIn;roOut=roIn*roR;roRejectFlow=roIn-roOut;
-      } else {
-        let bR;
-        if(!hasTargetCond){bR=1-(manualToRO/100);}
-        else {
-          bR=feedTDS>0&&(feedTDS-roPermTDS)!==0?(targetTDS-roPermTDS)/(feedTDS-roPermTDS):0;
-          if(!feedTDS){blendValid=false;blendWarning='ยังไม่ได้กรอกแหล่งน้ำ';bR=0;}else if(feedTDS<=targetTDS){bypassRO=true;bR=1;}else if(targetTDS<roPermTDS){blendValid=false;blendWarning='เป้าหมาย Cond ต่ำกว่า RO permeate';bR=0;}else bR=Math.max(0,Math.min(1,bR));
-        }
-        ufBypass=bR*prod;roOut=(1-bR)*prod;roIn=roR>0?roOut/roR:0;roRejectFlow=roIn-roOut;ufOut=ufBypass+roIn;ufRejectFlow=ufR>0?ufOut/ufR-ufOut:0;
-      }
-      actualProductTDS=bypassRO?feedTDS:(prod>0?(ufBypass*feedTDS+roOut*roPermTDS)/prod:0);
-      calcToRO=ufOut>0?(roIn/ufOut)*100:0;calcBypass=ufOut>0?(ufBypass/ufOut)*100:100;
-      return{prod,product:prod,ufOut,ufBypass,roIn,roOut,roRejectFlow,ufRejectFlow,actualProductTDS,calcToRO,calcBypass,blendValid,blendWarning};
-    };
-    const solveUfRoFromFeed=(tssOut)=>{
-      let ufOut=tssOut*ufR,ufBypass=0,roIn=0,roOut=0,roRejectFlow=0,ufRejectFlow=tssOut-ufOut,actualProductTDS=feedTDS,calcToRO=0,calcBypass=100,bypassRO=false,blendValid=true,blendWarning='';
-      if(splitMode==='manual'){roIn=ufOut*(manualToRO/100);ufBypass=ufOut-roIn;roOut=roIn*roR;roRejectFlow=roIn-roOut;}
-      else{
-        let bR;
-        if(!hasTargetCond){bR=1-(manualToRO/100);}
-        else {
-          bR=feedTDS>0&&(feedTDS-roPermTDS)!==0?(targetTDS-roPermTDS)/(feedTDS-roPermTDS):0;
-          if(!feedTDS){blendValid=false;blendWarning='ยังไม่ได้กรอกแหล่งน้ำ';bR=0;}else if(feedTDS<=targetTDS){bypassRO=true;bR=1;}else if(targetTDS<roPermTDS){blendValid=false;blendWarning='เป้าหมาย Cond ต่ำกว่า RO permeate';bR=0;}else bR=Math.max(0,Math.min(1,bR));
-        }
-        const d=roR*bR+(1-bR);roIn=d>0?ufOut*(1-bR)/d:0;roOut=roR*roIn;ufBypass=ufOut-roIn;roRejectFlow=roIn-roOut;
-      }
-      const prod=ufBypass+roOut;actualProductTDS=bypassRO?feedTDS:(prod>0?(ufBypass*feedTDS+roOut*roPermTDS)/prod:0);
-      calcToRO=ufOut>0?(roIn/ufOut)*100:0;calcBypass=ufOut>0?(ufBypass/ufOut)*100:100;
-      return{prod,product:prod,ufOut,ufBypass,roIn,roOut,roRejectFlow,ufRejectFlow,actualProductTDS,calcToRO,calcBypass,blendValid,blendWarning};
-    };
+  const phase15UiModel = useMemo(() => buildPhase15UiModel({
+    mode,
+    feedTds: mixedFeed.tds,
+    feedFlow: mixedFeed.flow,
+    productFlow,
+    routes: {
+      A: {enabled: phase15Routes.A, sharePct: phase15RouteRatios.A},
+      B: {enabled: phase15Routes.B, sharePct: phase15RouteRatios.B},
+      C: {enabled: phase15Routes.C, sharePct: phase15RouteRatios.C},
+    },
+    tssRejectPct: tssReject,
+    sludgeRecyclePct: sludgeWaterRecovery,
+    ufRejectPct: ufReject,
+    roRejectPct: roReject,
+    saltRejectionPct: roSaltRejection,
+    splitMode,
+    manualToRoPct: manualToRO,
+    hasTargetCond,
+    targetCond,
+    tdsEcFactor: COND_TO_TDS,
+    safetyMarginPct: safetyMargin,
+    dilutionSources: dilutionSources.map(s => ({...s, costPerM3: toNumber(s.costWater)+toNumber(s.costElec)+toNumber(s.costChem)+toNumber(s.costOps)})),
+    dilutionAllocationMode: dilutionMode === 'manual' ? 'manual' : 'lowest-cost',
+    roPermCondLimit,
+  }), [mixedFeed,phase15Routes,phase15RouteRatios,mode,productFlow,tssReject,sludgeWaterRecovery,ufReject,roReject,roSaltRejection,splitMode,manualToRO,hasTargetCond,targetCond,safetyMargin,dilutionSources,dilutionMode,roPermCondLimit]);
 
-    const branch={A:{enabled:phase15Routes.A,share:share('A')},B:{enabled:phase15Routes.B,share:share('B')},C:{enabled:phase15Routes.C,share:share('C')}};
-    if(mode==='know-output'){
-      branch.C.product=productFlow*branch.C.share;branch.C.feedFlow=branch.C.product;
-      branch.B.product=productFlow*branch.B.share;branch.B.feedFlow=tssR>0?branch.B.product/tssR:0;branch.B.tssOutFlow=branch.B.product;branch.B.tssRejectFlow=branch.B.feedFlow-branch.B.tssOutFlow;
-      branch.A.product=productFlow*branch.A.share;const aUF=solveUfRoFromProduct(branch.A.product);Object.assign(branch.A,aUF);branch.A.tssOutFlow=ufR>0?branch.A.ufOut/ufR:0;branch.A.feedFlow=tssR>0?branch.A.tssOutFlow/tssR:0;branch.A.tssRejectFlow=branch.A.feedFlow-branch.A.tssOutFlow;
-    } else {
-      branch.C.feedFlow=mixedFeed.flow*branch.C.share;branch.C.product=branch.C.feedFlow;
-      branch.B.feedFlow=mixedFeed.flow*branch.B.share;branch.B.tssOutFlow=branch.B.feedFlow*tssR;branch.B.product=branch.B.tssOutFlow;branch.B.tssRejectFlow=branch.B.feedFlow-branch.B.tssOutFlow;
-      branch.A.feedFlow=mixedFeed.flow*branch.A.share;branch.A.tssOutFlow=branch.A.feedFlow*tssR;branch.A.tssRejectFlow=branch.A.feedFlow-branch.A.tssOutFlow;Object.assign(branch.A,solveUfRoFromFeed(branch.A.tssOutFlow));
-    }
-    ['A','B','C'].forEach(id=>{const b=branch[id];b.feedFlow=b.enabled?toNumber(b.feedFlow):0;b.product=b.enabled?toNumber(b.product):0;b.tssOutFlow=toNumber(b.tssOutFlow);b.tssRejectFlow=toNumber(b.tssRejectFlow);b.sludgeWaterRecycle=b.tssRejectFlow*sludgeWaterR;b.sludgeWasteFlow=b.tssRejectFlow*(1-sludgeWaterR);});
-    const feedFlow=branch.A.feedFlow+branch.B.feedFlow+branch.C.feedFlow;
-    const tssOutFlow=branch.A.tssOutFlow+branch.B.tssOutFlow;
-    const tssRejectFlow=branch.A.tssRejectFlow+branch.B.tssRejectFlow;
-    const sludgeWaterRecycle=branch.A.sludgeWaterRecycle+branch.B.sludgeWaterRecycle;
-    const sludgeWasteFlow=branch.A.sludgeWasteFlow+branch.B.sludgeWasteFlow;
-    const ufOut=toNumber(branch.A.ufOut),ufBypass=toNumber(branch.A.ufBypass),roIn=toNumber(branch.A.roIn),roOut=toNumber(branch.A.roOut),ufRejectFlow=toNumber(branch.A.ufRejectFlow),roRejectFlow=toNumber(branch.A.roRejectFlow);
-    const planAProduct=branch.A.enabled?(toNumber(branch.A.product)>0?toNumber(branch.A.product):ufBypass+roOut):0;
-    branch.A.product=planAProduct;
-    const finalProduct=planAProduct+branch.B.product+branch.C.product;
-    const productLoad=planAProduct*toNumber(branch.A.actualProductTDS)+branch.B.product*feedTDS+branch.C.product*feedTDS;
-    const actualProductTDS=finalProduct>0?productLoad/finalProduct:0;
-    const ufRoRejectFlow=combineUfRoReject({ufRejectFlow,roRejectFlow});
-    const ufRoRejectTDS=combineUfRoRejectTds({ufRejectFlow,ufRejectTds:feedTDS,roRejectFlow,roRejectTds:roRejectTDS});
-    const totalReject=tssRejectFlow+ufRoRejectFlow;
-    const totalRejectTDS=totalReject>0?Math.max(0,(feedFlow*feedTDS-productLoad)/totalReject):0;
+  const calc = useMemo(() => {
     const sourceAllocations=mode==='know-output'&&mixedFeed.totalRatio>0
-      ? mixedFeed.sources.map(s=>({...s,actualFlow:feedFlow*(toNumber(s.ratio)/mixedFeed.totalRatio),actualRatio:(toNumber(s.ratio)/mixedFeed.totalRatio)*100}))
+      ? mixedFeed.sources.map(s=>({...s,actualFlow:phase15UiModel.calc.feedFlow*(toNumber(s.ratio)/mixedFeed.totalRatio),actualRatio:(toNumber(s.ratio)/mixedFeed.totalRatio)*100}))
       : mixedFeed.sources.map(s=>({...s,actualFlow:s.actualFlow!==undefined?s.actualFlow:toNumber(s.flow)}));
-    const ufRoV=validateDischarge(ufRoRejectTDS),totV=validateDischarge(totalRejectTDS),roPermCond=tds2cond(roPermTDS);
-    return {route:active.join('+'),routes:branch,routeShares:{A:share('A'),B:share('B'),C:share('C')},tssEnabled:branch.A.enabled||branch.B.enabled,ufroEnabled:branch.A.enabled,feedFlow,tssOutFlow,tssRejectFlow,sludgeWaterRecycle,sludgeWasteFlow,ufOut,ufBypass,roIn,roOut,roRejectFlow,ufRejectFlow,ufRoRejectFlow,ufRoRejectTDS,totalReject,finalProduct,feedTDS,ufPermTDS:feedTDS,ufRejectTDS:feedTDS,tssRejectTDS:feedTDS,roPermTDS,roRejectTDS,totalRejectTDS,actualProductTDS,overallRecovery:feedFlow>0?(finalProduct/feedFlow)*100:0,blendValid:branch.A.blendValid!==false,blendWarning:branch.A.blendWarning||'',sourceAllocations,totalRatio:mixedFeed.totalRatio||0,
-      tssRejectStatus:validateDischarge(feedTDS).severityStatus,ufRejectStatus:validateDischarge(feedTDS).severityStatus,roRejectStatus:validateDischarge(roRejectTDS).severityStatus,ufRoRejectStatus:ufRoV.severityStatus,ufRoRejectAllowed:ufRoV.regulatoryAllowed,ufRoRejectMargin:ufRoV.margin,totalRejectStatus:totV.severityStatus,totalRejectAllowed:totV.regulatoryAllowed,totalRejectMargin:totV.margin,targetTDS,hasTargetCond,calcToRO:toNumber(branch.A.calcToRO),calcBypass:toNumber(branch.A.calcBypass),productCondStatus:hasTargetCond&&tds2cond(actualProductTDS)>targetCond?'FAIL':'PASS',roPermCond,roPermCondLimit,roPermCondStatus:branch.A.enabled?(roPermCond<=roPermCondLimit?'PASS':'FAIL'):'PASS'};
-  }, [mixedFeed,phase15Routes,phase15RouteRatios,mode,productFlow,tssReject,sludgeWaterRecovery,ufReject,roReject,roSaltRejection,splitMode,manualToRO,targetTDS,hasTargetCond,targetCond,roPermCondLimit]);
+    return {...phase15UiModel.calc,sourceAllocations,totalRatio:mixedFeed.totalRatio||0};
+  }, [phase15UiModel,mixedFeed,mode]);
 
   // IMPORTANT MASS BALANCE LOGIC:
   // Final Discharge Flow = Total Reject Flow + Sum(Dilution Source Flows)
   // Final Discharge Conductivity must be calculated using flow-weighted average.
   // Do NOT ignore individual dilution source flows.
   const dilution = useMemo(() => {
-    const rejectFails=!calc.ufRoRejectAllowed;if(!rejectFails&&!showDilutionSim)return{needed:false,rejectFails:false};
-    const Qr=calc.ufRoRejectFlow,Cr=tds2cond(calc.ufRoRejectTDS),Ct=REJECT_COND_LIMIT*(1-safetyMargin/100);
+    const rejectFails=phase15UiModel.discharge.requiresAction;
+    if(!rejectFails&&!showDilutionSim)return{needed:false,rejectFails:false};
+    const Qr=calc.ufRoRejectFlow,Cr=tds2cond(calc.ufRoRejectTDS),Ct=phase15UiModel.discharge.operatingConductivityLimit;
     if(dilutionMode==='auto'){
+      const coreDilution=phase15UiModel.dilution;
+      const allocations=coreDilution.allocation?.allocations||[];
       const activeSrc=dilutionSources.filter(s=>s.enabled);
-      const Cd=activeSrc.length>0?activeSrc.reduce((s,x)=>s+toNumber(x.conductivity),0)/activeSrc.length:500;
-      const srcName=activeSrc.length===0?'น้ำผสม':activeSrc.length===1?activeSrc[0].name:`${activeSrc.length} sources`;
-      if(Cd>=Ct)return{needed:true,rejectFails,autoMode:true,cannotSolve:true,Cd,Cr,Qr,Ct,msg:'Cond น้ำผสมสูงเกิน',activeSrc};
-      if(Cr<=Ct){return{needed:true,rejectFails,autoMode:true,cannotSolve:false,QdReq:0,Cd,Cr,Qr,Ct,finalFlow:Qr,finalCond:Cr,finalTDS:cond2tds(Cr),finalStatus:getRejectStatus(cond2tds(Cr)),finalV:validateDischarge(cond2tds(Cr)),srcName,activeSrc,
-        // IMPORTANT ENGINEERING DISPLAY: individual source flows
-        sourceFlows:activeSrc.map(s=>({...s,actualFlow:0}))};}
-      const QdReq=Qr*(Cr-Ct)/(Ct-Cd);const fF=Qr+QdReq;const fC=(Qr*Cr+QdReq*Cd)/fF;const fT=cond2tds(fC);const fV=validateDischarge(fT);
-      // Each source gets equal share of required dilution flow
-      const perSrc=activeSrc.length>0?QdReq/activeSrc.length:QdReq;
-      const sourceFlows=activeSrc.map(s=>({...s,actualFlow:perSrc}));
-      return{needed:true,rejectFails,autoMode:true,cannotSolve:false,QdReq,Cd,Cr,Qr,Ct,finalFlow:fF,finalCond:fC,finalTDS:fT,finalStatus:fV.severityStatus,finalAllowed:fV.regulatoryAllowed,finalV:fV,srcName,activeSrc,sourceFlows};
-    } else {
-      const act=dilutionSources.filter(s=>s.enabled&&toNumber(s.flow)>0);
-      const dF=act.reduce((s,x)=>s+toNumber(x.flow),0);const dL=act.reduce((s,x)=>s+toNumber(x.flow)*toNumber(x.conductivity),0);
-      const fF=Qr+dF;const fC=fF>0?(Qr*Cr+dL)/fF:Cr;const fT=cond2tds(fC);const fV=validateDischarge(fT);
-      const sourceFlows=act.map(s=>({...s,actualFlow:toNumber(s.flow)}));
-      return{needed:true,rejectFails,autoMode:false,cannotSolve:false,dilFlow:dF,finalFlow:fF,finalCond:fC,finalTDS:fT,finalStatus:fV.severityStatus,finalAllowed:fV.regulatoryAllowed,finalV:fV,Cr,Qr,sources:act,sourceFlows};
+      const sourceFlows=allocations.filter(s=>toNumber(s.actualFlow)>0).map(s=>({...s,actualFlow:toNumber(s.actualFlow)}));
+      const allocated=sourceFlows.reduce((sum,s)=>sum+toNumber(s.actualFlow),0);
+      const Cd=allocated>0?sourceFlows.reduce((sum,s)=>sum+toNumber(s.actualFlow)*toNumber(s.conductivity),0)/allocated:0;
+      if(!coreDilution.feasible){
+        const msg=coreDilution.reason==='NO_DILUTION_SOURCE'?'ไม่มี Dilution Source ที่เปิดใช้งาน':coreDilution.reason==='INSUFFICIENT_DILUTION_CAPACITY'?'Dilution Source capacity ไม่พอ':'ไม่สามารถคำนวณ Dilution ได้';
+        return{needed:true,rejectFails,autoMode:true,cannotSolve:true,Cd,Cr,Qr,Ct,msg,activeSrc,sourceFlows};
+      }
+      const fF=coreDilution.finalFlow??Qr;
+      const fC=coreDilution.finalConductivity??Cr;
+      const fT=cond2tds(fC);const fV=validateDischarge(fT);
+      return{needed:true,rejectFails,autoMode:true,cannotSolve:false,QdReq:coreDilution.dilutionFlow||0,Cd,Cr,Qr,Ct,finalFlow:fF,finalCond:fC,finalTDS:fT,finalStatus:fV.severityStatus,finalAllowed:fV.regulatoryAllowed,finalV:fV,activeSrc,sourceFlows};
     }
-  }, [calc,dilutionSources,dilutionMode,showDilutionSim,safetyMargin]);
+    const act=dilutionSources.filter(s=>s.enabled&&toNumber(s.flow)>0);
+    const dF=act.reduce((s,x)=>s+toNumber(x.flow),0);const dL=act.reduce((s,x)=>s+toNumber(x.flow)*toNumber(x.conductivity),0);
+    const fF=Qr+dF;const fC=fF>0?(Qr*Cr+dL)/fF:Cr;const fT=cond2tds(fC);const fV=validateDischarge(fT);
+    const sourceFlows=act.map(s=>({...s,actualFlow:toNumber(s.flow)}));
+    return{needed:true,rejectFails,autoMode:false,cannotSolve:dF<=0,dilFlow:dF,finalFlow:fF,finalCond:fC,finalTDS:fT,finalStatus:fV.severityStatus,finalAllowed:fV.regulatoryAllowed,finalV:fV,Cr,Qr,sources:act,sourceFlows,msg:dF<=0?'ไม่มี Dilution Source flow':' '};
+  }, [phase15UiModel,calc,dilutionSources,dilutionMode,showDilutionSim]);
 
-  const finalDischargeV = useMemo(()=>{if(dilution.needed&&dilution.rejectFails&&!dilution.cannotSolve&&dilution.finalV)return dilution.finalV;return validateDischarge(calc.ufRoRejectTDS);},[calc,dilution]);
+  const finalDischargeV = useMemo(()=>{
+    if(dilution.needed&&dilution.rejectFails&&!dilution.cannotSolve&&dilution.finalV)return dilution.finalV;
+    return {
+      regulatoryAllowed:phase15UiModel.discharge.regulatoryAllowed,
+      severityStatus:phase15UiModel.discharge.severityStatus,
+      margin:phase15UiModel.discharge.operatingConductivityMargin,
+    };
+  },[phase15UiModel,dilution]);
   const finalAllowed=finalDischargeV.regulatoryAllowed,finalSeverity=finalDischargeV.severityStatus,finalMargin=finalDischargeV.margin;
   const waterControl = useMemo(() => {
     const pct = (n) => Math.max(0, Math.min(100, toNumber(n)));
@@ -525,7 +493,7 @@ export default function UFROCalculator() {
     const finalToRil = pct(finalToRilPct);
     const treatedToWaste = pct(treatedToWastePct);
     const rejectCond = tds2cond(calc.ufRoRejectTDS);
-    const rejectNeedsMix = rejectCond > REJECT_COND_LIMIT;
+    const rejectNeedsMix = phase15UiModel.discharge.requiresAction;
     const treatedFlow = rejectNeedsMix ? (dilution?.finalFlow ?? calc.ufRoRejectFlow) : calc.ufRoRejectFlow;
     return {
       ufToRO,
@@ -546,7 +514,7 @@ export default function UFROCalculator() {
       rejectRoute: rejectNeedsMix ? 'MIX REQUIRED' : 'DIRECT OK',
       ufControlMode: splitMode === 'manual' ? 'manual' : 'auto',
     };
-  }, [calc, dilution, splitMode, manualToRO, finalToRilPct, treatedToWastePct]);
+  }, [phase15UiModel, calc, dilution, splitMode, manualToRO, finalToRilPct, treatedToWastePct]);
   const phase10Calc = useMemo(() => {
     const processRecovery = 1 - Math.max(0, Math.min(0.95, toNumber(tssReject) / 100));
     const targetProductFlow = phase10HasTargetFlow ? phase10TargetFlow : 0;
