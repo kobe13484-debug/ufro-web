@@ -50,3 +50,49 @@ export function calculateEquipmentEnergy({ equipment = [], electricityCostPerKwh
     electricityCostPerKwh: unitCost,
   };
 }
+
+export function calculateContinuousChemicalCost({ chemicals = [], flows = {} } = {}) {
+  const rows = chemicals.filter((chemical) => chemical?.enabled !== false).map((chemical) => {
+    const flowBasis = String(chemical?.flowBasis ?? '');
+    const volumePerDay = nonNegative(flows?.[flowBasis]);
+    const dosageKgM3 = nonNegative(chemical?.dosageKgM3);
+    const unitPrice = nonNegative(chemical?.unitPrice);
+    const kgPerDay = dosageKgM3 * volumePerDay;
+    return {
+      ...chemical,
+      flowBasis,
+      volumePerDay,
+      dosageKgM3,
+      unitPrice,
+      kgPerDay,
+      costPerDay: kgPerDay * unitPrice,
+    };
+  });
+  return {
+    rows,
+    totalKgPerDay: rows.reduce((sum, row) => sum + row.kgPerDay, 0),
+    totalCostPerDay: rows.reduce((sum, row) => sum + row.costPerDay, 0),
+  };
+}
+
+export function calculateEventChemicalCost({ chemicals = [] } = {}) {
+  const rows = chemicals.filter((chemical) => chemical?.enabled !== false).map((chemical) => {
+    const kgEvent = nonNegative(chemical?.kgEvent);
+    const unitPrice = nonNegative(chemical?.unitPrice);
+    const intervalDays = Math.max(1, nonNegative(chemical?.intervalDays));
+    const costPerEvent = kgEvent * unitPrice;
+    return {
+      ...chemical,
+      kgEvent,
+      unitPrice,
+      intervalDays,
+      costPerEvent,
+      eventsPer60Days: 60 / intervalDays,
+      dailyEquivalentCost: costPerEvent / intervalDays,
+    };
+  });
+  return {
+    rows,
+    totalDailyEquivalentCost: rows.reduce((sum, row) => sum + row.dailyEquivalentCost, 0),
+  };
+}
