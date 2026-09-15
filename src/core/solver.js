@@ -9,12 +9,15 @@ const nonNegative = (value) => {
 export function solveKnownInput({feedFlow=0,...process}={}) {
   const requestedFeed=nonNegative(feedFlow);
   const result=solveRoutes({feedFlow:requestedFeed,...process});
-  const feasible=requestedFeed===0 || result.feedFlow>0;
+  const routeAvailable=requestedFeed===0 || result.feedFlow>0;
+  const capacityFeasible=result.capacityFeasible!==false;
+  const feasible=routeAvailable&&capacityFeasible;
+  const reason=!routeAvailable?'NO_ACTIVE_ROUTE':!capacityFeasible?'ROUTE_CAPACITY_EXCEEDED':null;
   return {
     ...result,
     mode:'known-input',
     feasible,
-    reason:feasible?null:'NO_ACTIVE_ROUTE',
+    reason,
     requestedFeedFlow:requestedFeed,
   };
 }
@@ -40,11 +43,12 @@ export function solveKnownOutput({productFlow=0,...process}={}) {
   }
   const requiredFeed=targetProduct/recovery;
   const result=solveRoutes({feedFlow:requiredFeed,...process});
+  const capacityFeasible=result.capacityFeasible!==false;
   return {
     ...result,
     mode:'known-output',
-    feasible:true,
-    reason:null,
+    feasible:capacityFeasible,
+    reason:capacityFeasible?null:'ROUTE_CAPACITY_EXCEEDED',
     targetProductFlow:targetProduct,
     productRecovery:recovery,
   };

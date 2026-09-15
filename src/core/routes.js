@@ -112,6 +112,22 @@ export function solveRoutes({
     rejectReturnPct,
   });
 
+  const capacityViolations=[];
+  ROUTE_IDS.forEach((id)=>{
+    const branch=branches[id];
+    const route=routes[id]||{};
+    const minFlow=finiteNonNegative(route.minFlow);
+    const rawMax=Number(route.maxFlow);
+    const maxFlow=Number.isFinite(rawMax)?Math.max(0,rawMax):Number.POSITIVE_INFINITY;
+    branch.minFlow=minFlow;
+    branch.maxFlow=maxFlow;
+    branch.capacityExceeded=branch.enabled&&branch.feedFlow>maxFlow+1e-9;
+    branch.belowMin=branch.enabled&&branch.feedFlow>1e-9&&branch.feedFlow<minFlow-1e-9;
+    if(branch.capacityExceeded||branch.belowMin){
+      capacityViolations.push({id,type:branch.capacityExceeded?'MAX':'MIN',feedFlow:branch.feedFlow,minFlow,maxFlow});
+    }
+  });
+
   return {
     feedFlow: sum('feedFlow'),
     productFlow,
@@ -122,6 +138,8 @@ export function solveRoutes({
     roRejectFlow,
     ufRoRejectFlow,
     ...recycleClosure,
+    capacityFeasible:capacityViolations.length===0,
+    capacityViolations,
     shares,
     branches,
   };
