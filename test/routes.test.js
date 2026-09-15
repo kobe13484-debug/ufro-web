@@ -1,9 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-let routesModule = {};
-try { routesModule = await import('../src/core/routes.js'); } catch {}
-const { solveRoutes } = routesModule;
+import { solveRoutes } from '../src/core/routes.js';
 const closeTo = (actual, expected, tolerance = 1e-9) => {
   assert.ok(Math.abs(actual - expected) <= tolerance, `${actual} != ${expected}`);
 };

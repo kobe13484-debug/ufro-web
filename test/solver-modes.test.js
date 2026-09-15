@@ -1,9 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-let solver = {};
-try { solver = await import('../src/core/solver.js'); } catch {}
-const { solveKnownInput, solveKnownOutput } = solver;
+import { solveKnownInput, solveKnownOutput } from '../src/core/solver.js';
 const closeTo=(a,b,t=1e-9)=>assert.ok(Math.abs(a-b)<=t,`${a} != ${b}`);
 const process={
   routes:{A:{enabled:true,sharePct:100}},

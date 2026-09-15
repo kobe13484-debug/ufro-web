@@ -1,9 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-let dilution = {};
-try { dilution = await import('../src/core/dilution.js'); } catch {}
-const { solveRequiredDilution, solveManualDilution } = dilution;
+import { solveRequiredDilution, solveManualDilution } from '../src/core/dilution.js';
 const closeTo = (a,b,t=1e-9)=>assert.ok(Math.abs(a-b)<=t,`${a} != ${b}`);
 
 test('required dilution matches hand calculation', () => {

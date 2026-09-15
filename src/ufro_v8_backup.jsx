@@ -1,5 +1,4 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { combineUfRoReject, combineUfRoRejectTds } from './flowMath.js';
 import { buildPhase15UiModel } from './core/uiAdapter.js';
 
 // ────── Helpers ──────
@@ -26,8 +25,6 @@ function validateDischarge(tds) {
   let severityStatus = !regulatoryAllowed ? 'FAIL' : (cond >= REJECT_COND_LIMIT*wR || tds >= REJECT_TDS_LIMIT*wR) ? 'WARNING' : 'PASS';
   return { regulatoryAllowed, severityStatus, cond, tds, margin: REJECT_COND_LIMIT - cond };
 }
-function getRejectStatus(tds) { return validateDischarge(tds).severityStatus; }
-
 function getRecommendations(calc, splitMode) {
   const recs = []; const roV = validateDischarge(calc.roRejectTDS); const totV = validateDischarge(calc.totalRejectTDS);
   if (!roV.regulatoryAllowed && totV.regulatoryAllowed) recs.push({area:'RO Concentrate',status:'WARNING',items:['RO Concentrate เกินเกณฑ์เดี่ยว แต่ Total Reject ยังผ่าน']});
@@ -297,7 +294,6 @@ export default function UFROCalculator() {
       return;
     }
 
-    const roR = (100 - toNumber(roReject)) / 100;
     const roPermTDS = feedTDS * (1 - toNumber(roSaltRejection) / 100);
     let planATDS = toNumber(calc?.routes?.A?.actualProductTDS);
     let noteExtra = '';
@@ -757,7 +753,7 @@ export default function UFROCalculator() {
       <header style={S.header} className="ufro-header">
         <div style={S.headerLeft}>
           <div style={S.logoMark}>◉</div>
-          <div><div style={S.title}>UF · RO CALCULATOR</div><div style={S.subtitle}>JYN Reuse Water v8.0</div></div>
+          <div><div style={S.title}>UF · RO CALCULATOR</div><div style={S.subtitle}>JYN Reuse Water v8.1</div></div>
         </div>
         <div style={S.headerCenter} className="ufro-mode-toggle">
           <div style={S.modeToggle}>
@@ -1420,7 +1416,7 @@ export default function UFROCalculator() {
 
           <footer style={S.footer}>
             <span style={{color:O.text3}}>Cond = TDS × {TDS_TO_COND} · Limit: {REJECT_COND_LIMIT.toLocaleString()} µS/cm · kWh = kW × h</span>
-            <span style={{color:O.accent}}>v8.0</span>
+            <span style={{color:O.accent}}>v8.1</span>
           </footer>
         </main>
       </div> : activeTab==='phase10' ? <Phase10Panel

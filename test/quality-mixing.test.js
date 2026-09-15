@@ -1,9 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-let quality = {};
-try { quality = await import('../src/core/quality.js'); } catch {}
-const { tdsFromConductivity, conductivityFromTds, mixWaterQuality } = quality;
+import { tdsFromConductivity, conductivityFromTds, mixWaterQuality } from '../src/core/quality.js';
 const closeTo = (a,b,t=1e-9)=>assert.ok(Math.abs(a-b)<=t,`${a} != ${b}`);
 
 test('default EC/TDS factor is 0.5', () => {

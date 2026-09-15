@@ -10,7 +10,7 @@ test('default Plan A golden case remains stable',()=>{
   closeTo(calc.feedFlow,223.0327067195679);
   closeTo(calc.ufRoRejectFlow,54.7294360476111);
   closeTo(calc.actualProductTDS*2,636);
-  closeTo(kpi.externalRawFlow,207.42041724919814);
+  closeTo(kpi.externalRawFlow,207.4204172491981);
   assert.equal(discharge.requiresAction,true);
 });
 
