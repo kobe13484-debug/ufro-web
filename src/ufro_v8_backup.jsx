@@ -2153,15 +2153,15 @@ function SvgBlueprintPhase15Diagram({svgRef,calc,sources,dilutionSources,waterCo
     {label(450, 256, 'Chemical', '#ddd6fe', 8)}
     {arrow('M 350 231.5 H 440', pipe, 2)}
     {arrow('M 460 232 H 550 V 282', pipe, 2)}
-    {box('process90', 'Process 90%', flowText(calc.tssOutFlow, 0), sourceGray, 1)}
+    {box('process90', calc.diagramLabels.process, flowText(calc.tssOutFlow, 0), sourceGray, 1)}
     {arrow('M 550 313.2 V 354.8', pipe, 2)}
-    {box('processReject', 'Reject 10%', flowText(calc.tssRejectFlow, 0), sourceGray, 1)}
+    {box('processReject', calc.diagramLabels.reject, flowText(calc.tssRejectFlow, 0), sourceGray, 1)}
     {arrow('M 550 386 V 435.9', pipe, 2)}
-    {box('sludge', 'Sludge Pond', flowText(calc.tssRejectFlow, 0), sourceGray, 1, {note:`70% return ${value(calc.sludgeWaterRecycle,0)} ${volUnit}`, noteSize:7})}
+    {box('sludge', 'Sludge Pond', flowText(calc.tssRejectFlow, 0), sourceGray, 1, {note:`${calc.diagramLabels.return} ${value(calc.sludgeWaterRecycle,0)} ${volUnit}`, noteSize:7})}
     {arrow('M 601 466.8 V 520', pipe, 2)}
-    {box('sludgeDisposal', '30% Sludge', flowText(calc.sludgeWasteFlow, 0), wasteBrown, 1)}
+    {box('sludgeDisposal', calc.diagramLabels.sludge, flowText(calc.sludgeWasteFlow, 0), wasteBrown, 1)}
     {line('M 480 451 H 450 V 302 H 500', gray, 2, 1, '6 5')}
-    {label(438, 391, '70% return', '#cbd5e1', 8, 'middle', 800, 1)}
+    {label(438, 391, calc.diagramLabels.return, '#cbd5e1', 8, 'middle', 800, 1)}
     {arrow('M 600 297.5 H 700', pipe, 2)}
     {box('afterTss', 'After TSS', flowText(calc.tssOutFlow, 0), blue)}
 

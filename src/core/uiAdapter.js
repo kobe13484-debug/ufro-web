@@ -298,6 +298,20 @@ export function buildPhase15UiModel(input = {}) {
     ufRoRejectConductivity: ufRoReject.conductivity,
   };
 
-  return { calc, kpi, streams, routes: branches, discharge, dilution };
+  const pctText = (value) => {
+    const rounded = Math.round(clamp(nonNegative(value), 0, 100) * 10) / 10;
+    return Number.isInteger(rounded) ? String(rounded) : String(rounded);
+  };
+  const tssRejectPct = clamp(nonNegative(input.tssRejectPct), 0, 100);
+  const sludgeRecyclePct = clamp(nonNegative(input.sludgeRecyclePct), 0, 100);
+  const diagramLabels = {
+    process: `Process ${pctText(100 - tssRejectPct)}%`,
+    reject: `Reject ${pctText(tssRejectPct)}%`,
+    return: `${pctText(sludgeRecyclePct)}% return`,
+    sludge: `${pctText(100 - sludgeRecyclePct)}% Sludge`,
+  };
+
+  calc.diagramLabels = diagramLabels;
+  return { calc, kpi, streams, routes: branches, discharge, dilution, diagramLabels };
 }
 
