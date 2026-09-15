@@ -63,7 +63,9 @@ export function solveRecycleClosure({
   const balanceError = externalRawFlow - product - finalExternalWasteFlow;
 
   return {
-    rejectReturnFlow, finalWastewaterFlow, internalRecycleFlow,
+    grossFeedFlow: grossFeed, productFlow: product,
+    sludgeRecycleFlow: sludgeRecycle, sludgeWasteFlow: sludgeWaste,
+    treatedRejectFlow: treatedReject, rejectReturnFlow, finalWastewaterFlow, internalRecycleFlow,
     externalRawFlow, finalExternalWasteFlow, balanceError,
   };
 }

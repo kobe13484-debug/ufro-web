@@ -1,3 +1,6 @@
+import { solveRecycleClosure } from './massBalance.js';
+import { mixWaterQuality, DEFAULT_TDS_EC_FACTOR } from './quality.js';
+
 const nonNegative = (value) => {
   const number = Number(value);
   return Number.isFinite(number) ? Math.max(0, number) : 0;
@@ -106,5 +109,46 @@ export function allocateDilutionSources({requiredFlow=0,sources=[],mode='equal'}
     totalAllocated,
     shortfall,
     allocations:normalized,
+  };
+}
+
+export function solveRejectReturnLoop({
+  grossFeedFlow=0,
+  productFlow=0,
+  sludgeRecycleFlow=0,
+  sludgeWasteFlow=0,
+  treatedRejectFlow=0,
+  treatedRejectTds=0,
+  externalRawTds=0,
+  sludgeRecycleTds=0,
+  rejectReturnPct=0,
+  tdsEcFactor=DEFAULT_TDS_EC_FACTOR,
+}={}) {
+  const closure=solveRecycleClosure({
+    grossFeedFlow,
+    productFlow,
+    sludgeRecycleFlow,
+    sludgeWasteFlow,
+    treatedRejectFlow,
+    rejectReturnPct,
+  });
+  const returnStream={flow:closure.rejectReturnFlow,tds:nonNegative(treatedRejectTds)};
+  const externalRawStream={flow:closure.externalRawFlow,tds:nonNegative(externalRawTds)};
+  const sludgeStream={flow:closure.sludgeRecycleFlow,tds:nonNegative(sludgeRecycleTds)};
+  const inlet=mixWaterQuality([externalRawStream,sludgeStream,returnStream],tdsEcFactor);
+  const wastewaterStream={
+    flow:closure.finalWastewaterFlow,
+    tds:nonNegative(treatedRejectTds),
+    conductivity:closure.finalWastewaterFlow>0
+      ? nonNegative(treatedRejectTds)/tdsEcFactor
+      : 0,
+  };
+  return {
+    ...closure,
+    inlet,
+    externalRawStream,
+    sludgeRecycleStream:sludgeStream,
+    rejectReturnStream:returnStream,
+    wastewaterStream,
   };
 }
