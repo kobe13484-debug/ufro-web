@@ -25,3 +25,19 @@ export function solveTssBalance({ grossFeedFlow = 0, rejectPct = 0, recyclePct =
     externalRawFlow,
   };
 }
+
+export function solveUfBalance({ feedFlow = 0, rejectPct = 0 } = {}) {
+  const feed = asNonNegativeFinite(feedFlow);
+  const rejectFraction = asFraction(rejectPct);
+  const rejectFlow = feed * rejectFraction;
+  const permeateFlow = feed - rejectFlow;
+  return { feedFlow: feed, permeateFlow, rejectFlow };
+}
+
+export function solveRoBalance({ feedFlow = 0, rejectPct = 0 } = {}) {
+  const feed = asNonNegativeFinite(feedFlow);
+  const rejectFraction = asFraction(rejectPct);
+  const rejectFlow = feed * rejectFraction;
+  const permeateFlow = feed - rejectFlow;
+  return { feedFlow: feed, permeateFlow, rejectFlow };
+}
